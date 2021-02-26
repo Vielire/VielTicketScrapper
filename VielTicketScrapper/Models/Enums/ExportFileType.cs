@@ -8,7 +8,23 @@ namespace VielTicketScrapper.Models.Enums
 {
     public enum ExportFileType
     {
-        TextFile,
-        ICalFile
+        Text,
+        ICal
+    }
+
+    static class ExportFileTypeMethods
+    {
+        public static String FriendlyName(this ExportFileType fileType)
+        {
+            switch (fileType)
+            {
+                case ExportFileType.Text:
+                    return "text";
+                case ExportFileType.ICal:
+                    return "iCalendar";
+                default:
+                    return Enum.GetName(typeof(ExportFileType), fileType);
+            }
+        }
     }
 }

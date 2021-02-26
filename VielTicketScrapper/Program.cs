@@ -32,7 +32,7 @@ namespace VielTicketScrapper
             if (verbose)
                 console.Out.WriteLine($"About to scrap data from the '{fileName}' file...");
 
-            console.Out.WriteLine($"{fileName} scrapped to {to} fle!");
+            console.Out.WriteLine($"{fileName} scrapped to {to.FriendlyName()} file!");
 
             if (verbose)
                 console.Out.WriteLine($"All done!");
