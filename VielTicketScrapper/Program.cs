@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using VielTicketScrapper.Models.Enums;
+using VielTicketScrapper.Scrappers;
 
 namespace VielTicketScrapper
 {
@@ -32,7 +33,9 @@ namespace VielTicketScrapper
             if (verbose)
                 console.Out.WriteLine($"About to scrap data from the '{fileName}' file...");
 
-            console.Out.WriteLine($"{fileName} scrapped to {to.FriendlyName()} file!");
+            IScrapper scrapper = new IntercityScrapper();
+
+            console.Out.WriteLine($"{scrapper.Scrap(filepath).GetData() }");
 
             if (verbose)
                 console.Out.WriteLine($"All done!");
