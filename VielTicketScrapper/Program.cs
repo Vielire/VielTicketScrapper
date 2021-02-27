@@ -1,4 +1,5 @@
-﻿using System.CommandLine;
+﻿using System;
+using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.CommandLine.IO;
 using System.IO;
@@ -12,37 +13,44 @@ namespace VielTicketScrapper
 {
     public static class Program
     {
+        static readonly Action<string> cout = (message) => Console.Out.WriteLine(message);
+
+        delegate void VerboseCout(string message, ConsoleColor foregroundColor = ConsoleColor.DarkGray, ConsoleColor bgColor = ConsoleColor.Black);
+        static readonly VerboseCout coutVerbose = (message, foregroundColor, bgColor) =>
+        {
+            Console.BackgroundColor = bgColor;
+            Console.ForegroundColor = foregroundColor;
+            Console.Out.WriteLine(message);
+            Console.ResetColor();
+        };
         public static async Task<int> Main(string[] args)
         {
-            //var cmd = new RootCommand
-            //{
-            //    new Command("intercity", "Scrap the data from Intercity ticket!")
-            //    {
-            //        new Argument<string>("filepath"),
-            //        new Option<ExportFileType>("--to", "ical/text"),
-            //        new Option<bool>("--verbose")
-            //    }.WithHandler(nameof(Intercity))
-            //};
+            var cmd = new RootCommand
+            {
+                new Command("intercity", "Scrap the data from Intercity ticket!")
+                {
+                    new Argument<string>("filepath"),
+                    new Option<ExportFileType>("--to", "ical/text"),
+                    new Option<bool>("--verbose")
+                }.WithHandler(nameof(Intercity))
+            };
 
-            //return await cmd.InvokeAsync(args);
-
-            IntercityScrapper scrapper = new IntercityScrapper();
-            scrapper.Scrap(@"C:\NO_BACKUP_FILES\Bilety\eic_109651084.pdf");
-            return 0;
+            return await cmd.InvokeAsync(args);
         }
         private static void Intercity(string filepath, ExportFileType to, bool verbose, IConsole console)
         {
             string[] filepathParts = filepath.Split(Path.DirectorySeparatorChar);
             string fileName = filepathParts[filepathParts.Length-1];
             if (verbose)
-                console.Out.WriteLine($"About to scrap data from the '{fileName}' file...");
+                coutVerbose($"About to scrap data from the '{fileName}' file...");
+            
 
             IntercityScrapper scrapper = new IntercityScrapper();
 
-            //console.Out.WriteLine($"{scrapper.Scrap(filepath).GetData() }");
+            cout($"{scrapper.Scrap(filepath).Model.TicketNumber }");
 
             if (verbose)
-                console.Out.WriteLine($"All done!");
+                coutVerbose($"All done!", ConsoleColor.DarkGreen);
         }
 
         private static Command WithHandler(this Command command, string methodName)

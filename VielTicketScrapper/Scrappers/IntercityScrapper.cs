@@ -20,7 +20,7 @@ namespace VielTicketScrapper.Scrappers
 
         private IEnumerable<string> allLines;
 
-        private IntercityTicketModel Model { get; set; }
+        public IntercityTicketModel Model { get; set; }
         
 
         public IntercityScrapper()
