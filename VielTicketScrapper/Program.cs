@@ -14,17 +14,21 @@ namespace VielTicketScrapper
     {
         public static async Task<int> Main(string[] args)
         {
-            var cmd = new RootCommand
-            {
-                new Command("intercity", "Scrap the data from Intercity ticket!")
-                {
-                    new Argument<string>("filepath"),
-                    new Option<ExportFileType>("--to", "ical/text"),
-                    new Option<bool>("--verbose")
-                }.WithHandler(nameof(Intercity))
-            };
+            //var cmd = new RootCommand
+            //{
+            //    new Command("intercity", "Scrap the data from Intercity ticket!")
+            //    {
+            //        new Argument<string>("filepath"),
+            //        new Option<ExportFileType>("--to", "ical/text"),
+            //        new Option<bool>("--verbose")
+            //    }.WithHandler(nameof(Intercity))
+            //};
 
-            return await cmd.InvokeAsync(args);
+            //return await cmd.InvokeAsync(args);
+
+            IntercityScrapper scrapper = new IntercityScrapper();
+            scrapper.Scrap(@"C:\NO_BACKUP_FILES\Bilety\eic_109651084.pdf");
+            return 0;
         }
         private static void Intercity(string filepath, ExportFileType to, bool verbose, IConsole console)
         {
@@ -33,9 +37,9 @@ namespace VielTicketScrapper
             if (verbose)
                 console.Out.WriteLine($"About to scrap data from the '{fileName}' file...");
 
-            IScrapper scrapper = new IntercityScrapper();
+            IntercityScrapper scrapper = new IntercityScrapper();
 
-            console.Out.WriteLine($"{scrapper.Scrap(filepath).GetData() }");
+            //console.Out.WriteLine($"{scrapper.Scrap(filepath).GetData() }");
 
             if (verbose)
                 console.Out.WriteLine($"All done!");

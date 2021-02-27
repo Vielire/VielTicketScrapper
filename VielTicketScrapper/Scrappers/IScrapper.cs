@@ -9,6 +9,5 @@ namespace VielTicketScrapper.Scrappers
     interface IScrapper
     {
         IScrapper Scrap(string filePath);
-        string GetData();
     }
 }
