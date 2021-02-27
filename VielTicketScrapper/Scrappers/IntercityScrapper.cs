@@ -59,7 +59,8 @@ namespace VielTicketScrapper.Scrappers
                 ? "Ticket number not found"
                 : ticketNumber.Split("Nr biletu : ")[1].Split(" ")[0];
 
-            //Skip lines until "Stacja Data Godzina" line found - it will skip around 13 unnecessary lines which will reduce operation for further iterations
+            //Skip lines until "Stacja Data Godzina" line found
+            //It will skip around 13 unnecessary lines which will reduce number of operations for further iterations
             IEnumerable<string> stationHeaderLine = allLines.SkipWhile(x => !x.Contains("Stacja Data Godzina"));
 
             //TravelerName
@@ -68,7 +69,7 @@ namespace VielTicketScrapper.Scrappers
                 ? "No traveler found"
                 : travelerLine.Split(": ")[1];
 
-            //StartingStation, StartDate, TrainType, TrainNumber, TravelDistance, TicketPrice
+            //StartingStation, StartDate, TrainType, TrainNumber, TravelDistance, TicketPrice, TicketPriceCurrency
             string startingStationLine = stationHeaderLine.Skip(1).FirstOrDefault();
 
             if (String.IsNullOrEmpty(startingStationLine))
@@ -83,10 +84,10 @@ namespace VielTicketScrapper.Scrappers
                 if(timeMatch.Success && dateMatch.Success)
                 {
                     Model.StartDateTime = new DateTime(DateTime.Now.Year,
-                                            int.Parse(dateMatch.Value.Substring(3, 2)),
-                                            int.Parse(dateMatch.Value.Substring(0, 2)),
-                                            int.Parse(timeMatch.Value.Substring(0, 2)),
-                                            int.Parse(timeMatch.Value.Substring(3, 2)),
+                                            Convert.ToInt32(dateMatch.Value.Substring(3, 2)),
+                                            Convert.ToInt32(dateMatch.Value.Substring(0, 2)),
+                                            Convert.ToInt32(timeMatch.Value.Substring(0, 2)),
+                                            Convert.ToInt32(timeMatch.Value.Substring(3, 2)),
                                             0);
 
                     Model.StartingStation = startingStationLine.Substring(0, dateMatch.Index).Trim();
@@ -95,8 +96,8 @@ namespace VielTicketScrapper.Scrappers
                     string[] restOfLineParts = restOfLine.Split(" ");
 
                     Model.TrainType = restOfLineParts[0];
-                    Model.TrainNumber = int.Parse(restOfLineParts[1]);
-                    Model.TravelDistance = int.Parse(restOfLineParts[2]);
+                    Model.TrainNumber = Convert.ToInt32(restOfLineParts[1]);
+                    Model.TravelDistance = Convert.ToInt32(restOfLineParts[2]);
 
                     string seat = restOfLineParts[3];
                     string seatNumber = seat.Substring(0, seat.Length - 1);
@@ -108,12 +109,12 @@ namespace VielTicketScrapper.Scrappers
 
                     char decimalSeparator = Convert.ToChar(Thread.CurrentThread.CurrentCulture.NumberFormat.NumberDecimalSeparator);
 
-                    Model.TicketPrice = decimal.Parse(restOfLineParts[4].Replace(',', decimalSeparator));
+                    Model.TicketPrice = Convert.ToDecimal(restOfLineParts[4].Replace(',', decimalSeparator));
                     Model.TicketPriceCurrency = restOfLineParts[5] == "zł" ? "PLN" : "N/A";
                 }
             }
 
-            //StartingStation, StartDate, TrainType, TrainNumber, TravelDistance, TicketPrice
+            //FinalStation, StopDate, TrainType, TrainCarNumber, 
             string finalStationLine = stationHeaderLine.Skip(2).FirstOrDefault();
 
             if (String.IsNullOrEmpty(finalStationLine))
@@ -128,16 +129,16 @@ namespace VielTicketScrapper.Scrappers
                 if (timeMatch.Success && dateMatch.Success)
                 {
                     Model.StopDateTime = new DateTime(DateTime.Now.Year,
-                                            int.Parse(dateMatch.Value.Substring(3, 2)),
-                                            int.Parse(dateMatch.Value.Substring(0, 2)),
-                                            int.Parse(timeMatch.Value.Substring(0, 2)),
-                                            int.Parse(timeMatch.Value.Substring(3, 2)),
+                                            Convert.ToInt32(dateMatch.Value.Substring(3, 2)),
+                                            Convert.ToInt32(dateMatch.Value.Substring(0, 2)),
+                                            Convert.ToInt32(timeMatch.Value.Substring(0, 2)),
+                                            Convert.ToInt32(timeMatch.Value.Substring(3, 2)),
                                             0);
 
                     Model.FinalStation = finalStationLine.Substring(0, dateMatch.Index).Trim();
 
                     string restOfLine = finalStationLine.Substring(timeMatch.Index + 6, finalStationLine.Length - (timeMatch.Index + 6));
-                    string[] restOfLineParts = restOfLine.Split(" ");
+                    Model.TrainCarNumber = Convert.ToInt32(restOfLine.Split(" ")[0]);
                 }
             }
 
