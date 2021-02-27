@@ -4,10 +4,8 @@ using iText.Kernel.Pdf.Canvas.Parser.Listener;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using VielTicketScrapper.Models.Tickets;
 using System.Threading;
 
@@ -15,10 +13,15 @@ namespace VielTicketScrapper.Scrappers
 {
     class IntercityScrapper
     {
-        private IEnumerable<string> allLines;
-        private IntercityTicketModel Model { get; set; }
+        public bool ScrapSuccess;
+
         private const string timeRegexPattern = @"[0-2]\d[:][0-5]\d";
         private const string dateRegexPattern = @"[0-3]\d[.][0-1]\d";
+
+        private IEnumerable<string> allLines;
+
+        private IntercityTicketModel Model { get; set; }
+        
 
         public IntercityScrapper()
         {
@@ -112,6 +115,10 @@ namespace VielTicketScrapper.Scrappers
                     Model.TicketPrice = Convert.ToDecimal(restOfLineParts[4].Replace(',', decimalSeparator));
                     Model.TicketPriceCurrency = restOfLineParts[5] == "zł" ? "PLN" : "N/A";
                 }
+                else
+                {
+                    ScrapSuccess = false;
+                }
             }
 
             //FinalStation, StopDate, TrainType, TrainCarNumber, 
@@ -139,9 +146,16 @@ namespace VielTicketScrapper.Scrappers
 
                     string restOfLine = finalStationLine.Substring(timeMatch.Index + 6, finalStationLine.Length - (timeMatch.Index + 6));
                     Model.TrainCarNumber = Convert.ToInt32(restOfLine.Split(" ")[0]);
+
+                    
+                }
+                else
+                {
+                    ScrapSuccess = false;
                 }
             }
 
+            ScrapSuccess = true;
             return this;
         }
     }
