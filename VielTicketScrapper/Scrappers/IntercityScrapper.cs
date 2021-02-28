@@ -13,15 +13,13 @@ namespace VielTicketScrapper.Scrappers
 {
     class IntercityScrapper
     {
-        public bool ScrapSuccess;
-
         private const string timeRegexPattern = @"[0-2]\d[:][0-5]\d";
         private const string dateRegexPattern = @"[0-3]\d[.][0-1]\d";
 
-        private IEnumerable<string> allLines;
+        public bool ScrapSuccess;
 
+        private IEnumerable<string> allLines;
         public IntercityTicketModel Model { get; set; }
-        
 
         public IntercityScrapper()
         {
@@ -44,20 +42,20 @@ namespace VielTicketScrapper.Scrappers
             if(processed.Length > 0)
             {
                 allLines = processed.ToString().Split("\n");
-                SetFields();
+                SetModelFields();
             }
             else
             {
-                allLines.Append("No data was scrapped! Did you provide correct Intercity Ticket? ");
+                allLines.Append("No data was scrapped! Did you provide correct Intercity Ticket?");
             }
 
             return this;
         }
 
-        private IntercityScrapper SetFields()
+        private IntercityScrapper SetModelFields()
         {
             //Ticker number
-            string ticketNumber = allLines.Where(line => line.Contains("Nr biletu : ")).FirstOrDefault();
+            string ticketNumber = allLines.Where(line => line.Contains("Nr biletu: ")).FirstOrDefault();
             Model.TicketNumber = String.IsNullOrWhiteSpace(ticketNumber)
                 ? "Ticket number not found"
                 : ticketNumber.Split("Nr biletu : ")[1].Split(" ")[0];
@@ -77,8 +75,8 @@ namespace VielTicketScrapper.Scrappers
 
             if (String.IsNullOrEmpty(startingStationLine))
             {
-                Model.StartingStation = "No Starting Station line found";
-                Model.StartDateTime = null;
+                ScrapSuccess = false;
+                return this;
             }
             else
             {
@@ -95,7 +93,7 @@ namespace VielTicketScrapper.Scrappers
 
                     Model.StartingStation = startingStationLine.Substring(0, dateMatch.Index).Trim();
 
-                    string restOfLine = startingStationLine.Substring(timeMatch.Index + 6, startingStationLine.Length - (timeMatch.Index + 6));
+                    string restOfLine = startingStationLine[(timeMatch.Index + 6)..];
                     string[] restOfLineParts = restOfLine.Split(" ");
 
                     Model.TrainType = restOfLineParts[0];
@@ -103,8 +101,8 @@ namespace VielTicketScrapper.Scrappers
                     Model.TravelDistance = Convert.ToInt32(restOfLineParts[2]);
 
                     string seat = restOfLineParts[3];
-                    string seatNumber = seat.Substring(0, seat.Length - 1);
-                    string seatType = seat.Substring(seat.Length - 1);
+                    string seatNumber = seat[0..^1];
+                    string seatType = seat[^1..];
                     Model.Seat = seatType == "o" ? seatNumber + " okno" 
                             : seatType == "ś" ? seatNumber + " środek"
                             : seatType == "k" ? seatNumber + " korytarz"
@@ -118,6 +116,7 @@ namespace VielTicketScrapper.Scrappers
                 else
                 {
                     ScrapSuccess = false;
+                    return this;
                 }
             }
 
@@ -126,8 +125,8 @@ namespace VielTicketScrapper.Scrappers
 
             if (String.IsNullOrEmpty(finalStationLine))
             {
-                Model.FinalStation = "No Starting Station line found";
-                Model.StopDateTime = null;
+                ScrapSuccess = false;
+                return this;
             }
             else
             {
@@ -144,14 +143,13 @@ namespace VielTicketScrapper.Scrappers
 
                     Model.FinalStation = finalStationLine.Substring(0, dateMatch.Index).Trim();
 
-                    string restOfLine = finalStationLine.Substring(timeMatch.Index + 6, finalStationLine.Length - (timeMatch.Index + 6));
+                    string restOfLine = finalStationLine[(timeMatch.Index + 6)..];
                     Model.TrainCarNumber = Convert.ToInt32(restOfLine.Split(" ")[0]);
-
-                    
                 }
                 else
                 {
                     ScrapSuccess = false;
+                    return this;
                 }
             }
 
