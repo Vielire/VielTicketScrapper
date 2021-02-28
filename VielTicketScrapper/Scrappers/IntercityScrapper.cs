@@ -11,150 +11,144 @@ using System.Threading;
 
 namespace VielTicketScrapper.Scrappers
 {
-    class IntercityScrapper
+    class IntercityScrapper : Scrapper
     {
-        private const string timeRegexPattern = @"[0-2]\d[:][0-5]\d";
-        private const string dateRegexPattern = @"[0-3]\d[.][0-1]\d";
+        private const string NotSupportedExMessage = "You provided file that is not supported within IntercityScrapper class";
+        private const string TimeRegexPattern = @"[0-2]\d[:][0-5]\d";
+        private const string DateRegexPattern = @"[0-3]\d[.][0-1]\d";
 
-        public bool ScrapSuccess;
+        private IntercityTicketModel Model = new();
 
-        private IEnumerable<string> allLines;
-        public IntercityTicketModel Model { get; set; }
-
-        public IntercityScrapper()
+        public override TicketModel ParseToTicket()
         {
-            Model = new IntercityTicketModel();
+            //StartingStation, DepartureDateTime, TrainType, TrainNumber, TravelDistance, TicketPrice, TicketPriceCurrency
+            string multiDataLine_StartStation = allLines.SkipWhile(x => !x.Contains("Stacja Data Godzina")).Skip(1).FirstOrDefault();
+            //FinalStation, ArrivalDateTime, TrainCarNumber
+            string multiDataLine_FinalStation = allLines.SkipWhile(x => !x.Contains("Stacja Data Godzina")).Skip(2).FirstOrDefault();
+
+            if (multiDataLine_StartStation == default || multiDataLine_FinalStation == default)
+                throw new NotSupportedException(NotSupportedExMessage);
+
+            Model.TicketNumber = GetTicketNumber();
+            Model.TravelerName = GetTravelerName();
+
+            Model.DepartureDateTime = GetDateTime(multiDataLine_StartStation);
+            Model.StartingStation = GetStationName(multiDataLine_StartStation);
+            Model.TrainType = GetTrainType(multiDataLine_StartStation);
+            Model.TrainNumber = GetTrainNumber(multiDataLine_StartStation);
+            Model.TravelDistance = GetTravelDistance(multiDataLine_StartStation);
+            Model.TicketPrice = GetTicketPrice(multiDataLine_StartStation);
+            Model.TicketPriceCurrency = GetTicketPriceCurrency(multiDataLine_StartStation);
+            Model.Seat = GetSeat(multiDataLine_StartStation);
+
+            Model.ArrivalDateTime = GetDateTime(multiDataLine_FinalStation);
+            Model.FinalStation = GetStationName(multiDataLine_FinalStation);
+            Model.TrainCarNumber = GetTrainCarNumber(multiDataLine_FinalStation);
+            
+            return Model;
         }
-        public IntercityScrapper Scrap(string filePath)
+        protected string GetTicketNumber()
         {
-            StringBuilder processed = new StringBuilder();
-            var pdfDocument = new PdfDocument(new PdfReader(filePath));
-            var strategy = new LocationTextExtractionStrategy();
-
-            for (int i = 1; i <= pdfDocument.GetNumberOfPages(); ++i)
-            {
-                var page = pdfDocument.GetPage(i);
-                string text = PdfTextExtractor.GetTextFromPage(page, strategy);
-                processed.Append(text);
-            }
-            pdfDocument.Close();
-
-            if(processed.Length > 0)
-            {
-                allLines = processed.ToString().Split("\n");
-                SetModelFields();
-            }
-            else
-            {
-                allLines.Append("No data was scrapped! Did you provide correct Intercity Ticket?");
-            }
-
-            return this;
-        }
-
-        private IntercityScrapper SetModelFields()
-        {
-            //Ticker number
-            string ticketNumber = allLines.Where(line => line.Contains("Nr biletu: ")).FirstOrDefault();
-            Model.TicketNumber = String.IsNullOrWhiteSpace(ticketNumber)
+            string ticketLine = allLines.Where(line => line.Contains("Nr biletu : ")).FirstOrDefault();
+            return String.IsNullOrWhiteSpace(ticketLine)
                 ? "Ticket number not found"
-                : ticketNumber.Split("Nr biletu : ")[1].Split(" ")[0];
-
-            //Skip lines until "Stacja Data Godzina" line found
-            //It will skip around 13 unnecessary lines which will reduce number of operations for further iterations
-            IEnumerable<string> stationHeaderLine = allLines.SkipWhile(x => !x.Contains("Stacja Data Godzina"));
-
-            //TravelerName
-            string travelerLine = stationHeaderLine.Where(line => line.Contains("Podróżny")).FirstOrDefault();
-            Model.TravelerName = String.IsNullOrWhiteSpace(travelerLine)
+                : ticketLine.Split("Nr biletu : ")[1].Split(" ")[0];
+        }
+        protected string GetTravelerName()
+        {
+            string travelerLine = allLines.Where(line => line.Contains("Podróżny")).FirstOrDefault();
+            return String.IsNullOrWhiteSpace(travelerLine)
                 ? "No traveler found"
                 : travelerLine.Split(": ")[1];
+        }
+        protected static DateTime GetDateTime(string line)
+        {
+            Match timeMatch = Regex.Match(line, TimeRegexPattern);
+            Match dateMatch = Regex.Match(line, DateRegexPattern);
 
-            //StartingStation, StartDate, TrainType, TrainNumber, TravelDistance, TicketPrice, TicketPriceCurrency
-            string startingStationLine = stationHeaderLine.Skip(1).FirstOrDefault();
+            if(!timeMatch.Success || !dateMatch.Success)
+                throw new NotSupportedException(NotSupportedExMessage);
 
-            if (String.IsNullOrEmpty(startingStationLine))
-            {
-                ScrapSuccess = false;
-                return this;
-            }
-            else
-            {
-                Match timeMatch = Regex.Match(startingStationLine, timeRegexPattern);
-                Match dateMatch = Regex.Match(startingStationLine, dateRegexPattern);
-                if(timeMatch.Success && dateMatch.Success)
-                {
-                    Model.StartDateTime = new DateTime(DateTime.Now.Year,
-                                            Convert.ToInt32(dateMatch.Value.Substring(3, 2)),
-                                            Convert.ToInt32(dateMatch.Value.Substring(0, 2)),
-                                            Convert.ToInt32(timeMatch.Value.Substring(0, 2)),
-                                            Convert.ToInt32(timeMatch.Value.Substring(3, 2)),
-                                            0);
+            return new DateTime(DateTime.Now.Year,
+                                Convert.ToInt32(dateMatch.Value.Substring(3, 2)),
+                                Convert.ToInt32(dateMatch.Value.Substring(0, 2)),
+                                Convert.ToInt32(timeMatch.Value.Substring(0, 2)),
+                                Convert.ToInt32(timeMatch.Value.Substring(3, 2)),
+                                0);
+        }
+        protected static string GetStationName(string line)
+        {
+            Match dateMatch = Regex.Match(line, DateRegexPattern);
+            if (!dateMatch.Success)
+                throw new NotSupportedException(NotSupportedExMessage);
 
-                    Model.StartingStation = startingStationLine.Substring(0, dateMatch.Index).Trim();
+            return line.Substring(0, dateMatch.Index).Trim();
+        }
 
-                    string restOfLine = startingStationLine[(timeMatch.Index + 6)..];
-                    string[] restOfLineParts = restOfLine.Split(" ");
+        protected static string GetTrainType(string line)
+        {
+            Match timeMatch = Regex.Match(line, TimeRegexPattern);
+            if (!timeMatch.Success)
+                throw new NotSupportedException(NotSupportedExMessage);
 
-                    Model.TrainType = restOfLineParts[0];
-                    Model.TrainNumber = Convert.ToInt32(restOfLineParts[1]);
-                    Model.TravelDistance = Convert.ToInt32(restOfLineParts[2]);
+            return line[(timeMatch.Index + 6)..].Split(" ")[0];
+        }
+        protected static int GetTrainNumber(string line)
+        {
+            Match timeMatch = Regex.Match(line, TimeRegexPattern);
+            if (!timeMatch.Success)
+                throw new NotSupportedException(NotSupportedExMessage);
 
-                    string seat = restOfLineParts[3];
-                    string seatNumber = seat[0..^1];
-                    string seatType = seat[^1..];
-                    Model.Seat = seatType == "o" ? seatNumber + " okno" 
-                            : seatType == "ś" ? seatNumber + " środek"
-                            : seatType == "k" ? seatNumber + " korytarz"
-                            : null;
+            return Convert.ToInt32(line[(timeMatch.Index + 6)..].Split(" ")[1]);
+        }
+        protected static int GetTravelDistance(string line)
+        {
+            Match timeMatch = Regex.Match(line, TimeRegexPattern);
+            if (!timeMatch.Success)
+                throw new NotSupportedException(NotSupportedExMessage);
 
-                    char decimalSeparator = Convert.ToChar(Thread.CurrentThread.CurrentCulture.NumberFormat.NumberDecimalSeparator);
+            return Convert.ToInt32(line[(timeMatch.Index + 6)..].Split(" ")[2]);
+        }
+        protected static string GetSeat(string line)
+        {
+            Match timeMatch = Regex.Match(line, TimeRegexPattern);
+            if (!timeMatch.Success)
+                throw new NotSupportedException(NotSupportedExMessage);
 
-                    Model.TicketPrice = Convert.ToDecimal(restOfLineParts[4].Replace(',', decimalSeparator));
-                    Model.TicketPriceCurrency = restOfLineParts[5] == "zł" ? "PLN" : "N/A";
-                }
-                else
-                {
-                    ScrapSuccess = false;
-                    return this;
-                }
-            }
+            string seat = line[(timeMatch.Index + 6)..].Split(" ")[3];
+            string seatNumber = seat[0..^1];
+            string seatType = seat[^1..];
 
-            //FinalStation, StopDate, TrainType, TrainCarNumber, 
-            string finalStationLine = stationHeaderLine.Skip(2).FirstOrDefault();
+            return seatType == "o" ? seatNumber + " okno"
+                 : seatType == "ś" ? seatNumber + " środek"
+                 : seatType == "k" ? seatNumber + " korytarz"
+                 : null;
+        }
+        protected static decimal GetTicketPrice(string line)
+        {
+            Match timeMatch = Regex.Match(line, TimeRegexPattern);
+            if (!timeMatch.Success)
+                throw new NotSupportedException(NotSupportedExMessage);
 
-            if (String.IsNullOrEmpty(finalStationLine))
-            {
-                ScrapSuccess = false;
-                return this;
-            }
-            else
-            {
-                Match timeMatch = Regex.Match(finalStationLine, timeRegexPattern);
-                Match dateMatch = Regex.Match(finalStationLine, dateRegexPattern);
-                if (timeMatch.Success && dateMatch.Success)
-                {
-                    Model.StopDateTime = new DateTime(DateTime.Now.Year,
-                                            Convert.ToInt32(dateMatch.Value.Substring(3, 2)),
-                                            Convert.ToInt32(dateMatch.Value.Substring(0, 2)),
-                                            Convert.ToInt32(timeMatch.Value.Substring(0, 2)),
-                                            Convert.ToInt32(timeMatch.Value.Substring(3, 2)),
-                                            0);
+            char decimalSeparator = Convert.ToChar(Thread.CurrentThread.CurrentCulture.NumberFormat.NumberDecimalSeparator);
 
-                    Model.FinalStation = finalStationLine.Substring(0, dateMatch.Index).Trim();
+            return Convert.ToDecimal(line[(timeMatch.Index + 6)..].Split(" ")[4].Replace(',', decimalSeparator));
+        }
+        protected static string GetTicketPriceCurrency(string line)
+        {
+            Match timeMatch = Regex.Match(line, TimeRegexPattern);
+            if (!timeMatch.Success)
+                throw new NotSupportedException(NotSupportedExMessage);
 
-                    string restOfLine = finalStationLine[(timeMatch.Index + 6)..];
-                    Model.TrainCarNumber = Convert.ToInt32(restOfLine.Split(" ")[0]);
-                }
-                else
-                {
-                    ScrapSuccess = false;
-                    return this;
-                }
-            }
+            return line[(timeMatch.Index + 6)..].Split(" ")[5] == "zł" ? "PLN" : "N/A"; ;
+        }
+        protected static int GetTrainCarNumber(string line)
+        {
+            Match timeMatch = Regex.Match(line, TimeRegexPattern);
+            if (!timeMatch.Success)
+                throw new NotSupportedException(NotSupportedExMessage);
 
-            ScrapSuccess = true;
-            return this;
+            return Convert.ToInt32(line[(timeMatch.Index + 6)..].Split(" ")[0]);
         }
     }
 }

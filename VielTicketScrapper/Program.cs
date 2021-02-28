@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using VielTicketScrapper.FileGenerators;
 using VielTicketScrapper.Models.Enums;
+using VielTicketScrapper.Models.Tickets;
 using VielTicketScrapper.Scrappers;
 
 namespace VielTicketScrapper
@@ -52,17 +53,17 @@ namespace VielTicketScrapper
 
 
             IntercityScrapper scrapper = new IntercityScrapper();
-            scrapper.Scrap(filePath);
-            ICal ical = new ICal(scrapper.Model);
+            TicketModel ticket = scrapper.ScrapPDF(filePath).ParseToTicket();
+            ICal ical = new(ticket);
 
             switch (to)
             {
                 case ExportFileType.ICal:
-                    File.WriteAllText(folderPath + DateTime.Now.ToString("yyyyMMddhhmmss_") + scrapper.Model.TicketNumber + ".ics", ical.ToString());
+                    File.WriteAllText(folderPath + DateTime.Now.ToString("yyyyMMddhhmmss_") + ticket.TicketNumber + ".ics", ical.ToString());
                     cout("You should find iCal file next to the ticket file");
                     break;
                 default:
-                    File.WriteAllText(folderPath + DateTime.Now.ToString("yyyyMMddhhmmss_") + scrapper.Model.TicketNumber + ".txt", ical.ToString());
+                    File.WriteAllText(folderPath + DateTime.Now.ToString("yyyyMMddhhmmss_") + ticket.TicketNumber + ".txt", ical.ToString());
                     cout("You should find text file next to the ticket file");
                     break;
             }

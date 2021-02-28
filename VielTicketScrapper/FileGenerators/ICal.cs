@@ -23,7 +23,6 @@ namespace VielTicketScrapper.FileGenerators
 
         public override string ToString()
         {
-            
             Calendar cal = new();
             cal.Method = CalendarMethods.Publish; // Outlook needs this property "REQUEST" will update an existing event with the same UID (Unique ID) and a newer time stamp.
 
@@ -32,23 +31,27 @@ namespace VielTicketScrapper.FileGenerators
                 Class = "Publish",
                 Name = "VEVENT",
                 Summary = $"{ticket.StartingStation} - {ticket.FinalStation}, {ticket.TravelerName}",
-                Start = new CalDateTime(ticket.StartDateTime),
-                End = new CalDateTime(ticket.StopDateTime),
+                Start = new CalDateTime(ticket.DepartureDateTime),
+                End = new CalDateTime(ticket.ArrivalDateTime),
                 Uid = Guid.NewGuid().ToString(),
                 Description = $"Nr biletu: {ticket.TicketNumber}\n"
             };
 
-            //if(ticket.GetType() == typeof(IntercityTicketModel))
             if(ticket is IntercityTicketModel intercityTicket)
             {
-                e.Description += $"{intercityTicket.TrainCarNumber}";
+                e.Summary = $"{intercityTicket.TrainType} | " + e.Summary;
+                e.Description += $"Nr wagonu: {intercityTicket.TrainCarNumber}\n";
+                e.Description += $"Miejsce: {intercityTicket.Seat}\n";
+                e.Description += $"Długość trasy: {intercityTicket.TravelDistance} km\n";
             }
+
+            e.Description += $"Czas podróży: {TimeSpan.FromTicks(ticket.ArrivalDateTime.Ticks - ticket.DepartureDateTime.Ticks):hh\\:mm} \n";
 
             //Alarm 1 day before event
             e.Alarms.Add(new()
             {
                 Action = AlarmAction.Display,
-                Trigger = new Trigger(TimeSpan.FromTicks(ticket.StartDateTime.AddDays(-1).Ticks)),
+                Trigger = new Trigger(TimeSpan.FromTicks(ticket.DepartureDateTime.AddDays(-1).Ticks)),
                 Summary = $"Pociąg do {ticket.FinalStation}"
             });
 
@@ -56,7 +59,7 @@ namespace VielTicketScrapper.FileGenerators
             e.Alarms.Add(new()
             {
                 Action = AlarmAction.Display,
-                Trigger = new Trigger(TimeSpan.FromTicks(ticket.StartDateTime.AddHours(-2).Ticks)),
+                Trigger = new Trigger(TimeSpan.FromTicks(ticket.DepartureDateTime.AddHours(-2).Ticks)),
                 Summary = $"Pociąg do {ticket.FinalStation}"
             });
 

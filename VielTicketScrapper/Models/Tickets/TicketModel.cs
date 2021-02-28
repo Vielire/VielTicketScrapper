@@ -15,7 +15,7 @@ namespace VielTicketScrapper.Models.Tickets
         public string TravelerName { get; set; }
         public string StartingStation { get; set; }
         public string FinalStation { get; set; }
-        public DateTime StartDateTime { get; set; }
-        public DateTime StopDateTime { get; set; }
+        public DateTime DepartureDateTime { get; set; }
+        public DateTime ArrivalDateTime { get; set; }
     }
 }
