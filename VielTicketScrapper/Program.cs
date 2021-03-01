@@ -58,7 +58,7 @@ namespace VielTicketScrapper
             try
             {
                 IntercityScrapper scrapper = new IntercityScrapper();
-                TicketModel ticket = scrapper.ScrapPDF(filePath).ParseToTicket();
+                Ticket ticket = scrapper.ScrapPDF(filePath).ParseToTicket();
 
                 ICal ical = new(ticket);
 

@@ -14,9 +14,10 @@ namespace VielTicketScrapper.FileGenerators
 {
     class ICal
     {
-        private readonly TicketModel ticket;
+        private readonly Ticket ticket;
+        private Calendar calendar;
 
-        public ICal(TicketModel ticket)
+        public ICal(Ticket ticket)
         {
             this.ticket = ticket;
         }
@@ -37,7 +38,7 @@ namespace VielTicketScrapper.FileGenerators
                 Description = $"Nr biletu: {ticket.TicketNumber}\n"
             };
 
-            if(ticket is IntercityTicketModel intercityTicket)
+            if(ticket is IntercityTicket intercityTicket)
             {
                 e.Summary = $"{intercityTicket.TrainType} | " + e.Summary;
                 e.Description += $"Nr wagonu: {intercityTicket.TrainCarNumber}\n";

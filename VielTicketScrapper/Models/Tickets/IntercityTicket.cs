@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace VielTicketScrapper.Models.Tickets
 {
-    class IntercityTicketModel : TicketModel
+    class IntercityTicket : Ticket
     {
         public string TrainType { get; set; }
         public int TrainNumber { get; set; }
