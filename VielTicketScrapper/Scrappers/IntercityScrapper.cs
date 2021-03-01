@@ -17,9 +17,9 @@ namespace VielTicketScrapper.Scrappers
         private const string TimeRegexPattern = @"[0-2]\d[:][0-5]\d";
         private const string DateRegexPattern = @"[0-3]\d[.][0-1]\d";
 
-        private IntercityTicketModel Model = new();
+        private IntercityTicket Model = new();
 
-        public override TicketModel ParseToTicket()
+        public override IntercityTicket ParseToTicket()
         {
             //StartingStation, DepartureDateTime, TrainType, TrainNumber, TravelDistance, TicketPrice, TicketPriceCurrency
             string multiDataLine_StartStation = allLines.SkipWhile(x => !x.Contains("Stacja Data Godzina")).Skip(1).FirstOrDefault();

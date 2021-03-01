@@ -12,12 +12,11 @@ namespace VielTicketScrapper.Scrappers
 {
     abstract class Scrapper
     {
-        public bool ScrapSuccess;
         public IEnumerable<string> allLines;
 
         public virtual Scrapper ScrapPDF(string filePath)
         {
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
             var pdfDocument = new PdfDocument(new PdfReader(filePath));
             var strategy = new LocationTextExtractionStrategy();
 
@@ -37,6 +36,6 @@ namespace VielTicketScrapper.Scrappers
             return this;
         }
         
-        public abstract TicketModel ParseToTicket();
+        public abstract Ticket ParseToTicket();
     }
 }
