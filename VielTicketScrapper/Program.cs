@@ -6,7 +6,9 @@ using System.IO;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using VielTicketScrapper.FileGenerators;
 using VielTicketScrapper.Models.Enums;
+using VielTicketScrapper.Models.Tickets;
 using VielTicketScrapper.Scrappers;
 
 namespace VielTicketScrapper
@@ -25,30 +27,47 @@ namespace VielTicketScrapper
         };
         public static async Task<int> Main(string[] args)
         {
-            var cmd = new RootCommand
-            {
-                new Command("intercity", "Scrap the data from Intercity ticket!")
-                {
-                    new Argument<string>("filepath"),
-                    new Option<ExportFileType>("--to", "ical/text"),
-                    new Option<bool>("--verbose")
-                }.WithHandler(nameof(Intercity))
-            };
+            //var cmd = new RootCommand
+            //{
+            //    new Command("intercity", "Scrap the data from Intercity ticket!")
+            //    {
+            //        new Argument<string>("filepath"),
+            //        new Option<ExportFileType>("--to", "ical/text"),
+            //        new Option<bool>("--verbose")
+            //    }.WithHandler(nameof(Intercity))
+            //};
 
-            return await cmd.InvokeAsync(args);
+            //return await cmd.InvokeAsync(args);
+
+            Intercity(@"C:\NO_BACKUP_FILES\Bilety\Intercity_template.pdf", ExportFileType.ICal, false, null);
+            return 0;
         }
-        private static void Intercity(string filepath, ExportFileType to, bool verbose, IConsole console)
+        private static void Intercity(string filePath, ExportFileType to, bool verbose, IConsole console)
         {
-            string[] filepathParts = filepath.Split(Path.DirectorySeparatorChar);
+            string[] filepathParts = filePath.Split(Path.DirectorySeparatorChar);
             string fileName = filepathParts[filepathParts.Length-1];
+            string folderPath = filePath.Substring(0, filePath.Length - fileName.Length);
+            
             if (verbose)
                 coutVerbose($"About to scrap data from the '{fileName}' file...");
-            
+
 
             IntercityScrapper scrapper = new IntercityScrapper();
+            TicketModel ticket = scrapper.ScrapPDF(filePath).ParseToTicket();
+            ICal ical = new(ticket);
 
-            cout($"{scrapper.Scrap(filepath).Model.TicketNumber }");
-
+            switch (to)
+            {
+                case ExportFileType.ICal:
+                    File.WriteAllText(folderPath + DateTime.Now.ToString("yyyyMMddhhmmss_") + ticket.TicketNumber + ".ics", ical.ToString());
+                    cout("You should find iCal file next to the ticket file");
+                    break;
+                default:
+                    File.WriteAllText(folderPath + DateTime.Now.ToString("yyyyMMddhhmmss_") + ticket.TicketNumber + ".txt", ical.ToString());
+                    cout("You should find text file next to the ticket file");
+                    break;
+            }
+            
             if (verbose)
                 coutVerbose($"All done!", ConsoleColor.DarkGreen);
         }
