@@ -4,9 +4,8 @@ using System.CommandLine.Invocation;
 using System.CommandLine.IO;
 using System.IO;
 using System.Reflection;
-using System.Threading;
 using System.Threading.Tasks;
-using VielTicketScrapper.FileGenerators;
+using VielTicketScrapper.Builders;
 using VielTicketScrapper.Models.Enums;
 using VielTicketScrapper.Models.Tickets;
 using VielTicketScrapper.Scrappers;
@@ -42,9 +41,6 @@ namespace VielTicketScrapper
             };
 
             return await cmd.InvokeAsync(args);
-
-            //Intercity(@"C:\NO_BACKUP_FILES\Bilety\Intercity_template_wymiana.pdf", ExportFileType.ICal, false, null);
-            //return 0;
         }
         private static void Intercity(string filePath, ExportFileType to, bool verbose, IConsole console)
         {
@@ -58,19 +54,32 @@ namespace VielTicketScrapper
             try
             {
                 IntercityScrapper scrapper = new IntercityScrapper();
-                Ticket ticket = scrapper.ScrapPDF(filePath).ParseToTicket();
-
-                ICal ical = new(ticket);
+                IntercityTicket ticket = (IntercityTicket)scrapper.ScrapPDF(filePath).ParseToTicket();
 
                 switch (to)
                 {
                     case ExportFileType.ICal:
-                        File.WriteAllText(folderPath + DateTime.Now.ToString("yyyyMMddhhmmss_") + ticket.TicketNumber + ".ics", ical.ToString());
+                        string eventTitle = $"{ticket.TrainType} | {ticket.StartingStation} - {ticket.FinalStation}, {ticket.TravelerName}";
+                        string eventDescription = $"Nr biletu: {ticket.TicketNumber}\n" +
+                                                  $"Nr wagonu: {ticket.TrainCarNumber}\n" +
+                                                  $"Miejsce: { ticket.Seat}\n" +
+                                                  $"Czas podróży: {TimeSpan.FromTicks(ticket.ArrivalDateTime.Ticks - ticket.DepartureDateTime.Ticks):hh\\:mm} \n" +
+                                                  $"Długość trasy: {ticket.TravelDistance} km\n";
+
+                        string alarmMessage = $"Pociąg z {ticket.StartingStation} o godz. {ticket.DepartureDateTime:HH:mm}";
+
+                        var iCal = ICal.Create()
+                                        .AddEvent(eventTitle, ticket.DepartureDateTime, ticket.ArrivalDateTime)
+                                        .AddEventDescription(eventDescription)
+                                        .AddEventAlarm(15, alarmMessage)
+                                        .AddEventAlarm(2 * 60, alarmMessage)
+                                        .AddEventAlarm(24 * 60, alarmMessage);
+
+                        File.WriteAllText(folderPath + DateTime.Now.ToString("yyyyMMddhhmmss_") + ticket.TicketNumber + ".ics", iCal.ToString());
                         cout("You should find iCal file next to the ticket file");
                         break;
                     default:
-                        File.WriteAllText(folderPath + DateTime.Now.ToString("yyyyMMddhhmmss_") + ticket.TicketNumber + ".txt", ical.ToString());
-                        cout("You should find text file next to the ticket file");
+                        cout("No ExportFileType passed to switch-case. Something went really wrong...");
                         break;
                 }
 

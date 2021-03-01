@@ -19,7 +19,7 @@ namespace VielTicketScrapper.Scrappers
 
         private IntercityTicket Model = new();
 
-        public override Ticket ParseToTicket()
+        public override IntercityTicket ParseToTicket()
         {
             //StartingStation, DepartureDateTime, TrainType, TrainNumber, TravelDistance, TicketPrice, TicketPriceCurrency
             string multiDataLine_StartStation = allLines.SkipWhile(x => !x.Contains("Stacja Data Godzina")).Skip(1).FirstOrDefault();
