@@ -14,7 +14,7 @@ namespace VielTicketScrapper.Models.Enums
 
     static class ExportFileTypeMethods
     {
-        public static String FriendlyName(this ExportFileType fileType)
+        public static string FriendlyName(this ExportFileType fileType)
         {
             switch (fileType)
             {

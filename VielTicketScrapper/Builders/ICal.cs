@@ -5,14 +5,9 @@ using Ical.Net.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using VielTicketScrapper.Models.Enums;
-using VielTicketScrapper.Models.Tickets;
 
 namespace VielTicketScrapper.Builders
 {
-    
     interface IEventCreate
     {
         IEventOptions AddEvent(string title, DateTime eventStart, DateTime eventEnd);
@@ -31,7 +26,8 @@ namespace VielTicketScrapper.Builders
 
         private ICal()
         {
-            // Outlook needs this property "REQUEST" will update an existing event with the same UID (Unique ID) and a newer time stamp.)
+            // Outlook needs property Method = CalendarMethods.Publish cause "REQUEST" will
+            // update an existing event with the same UID (Unique ID) and a newer timestamp.
             calendar = new() { Method = CalendarMethods.Publish };
             CalendarEvents = new List<CalendarEvent>();
         }
@@ -70,7 +66,7 @@ namespace VielTicketScrapper.Builders
             {
                 Action = AlarmAction.Display,
                 Trigger = new Trigger(TimeSpan.FromTicks(CalendarEventHolder.Start.AddMinutes(-minutesBeforeDeparture).Ticks)),
-                Summary = withMessage // $"Pociąg do {ticket.FinalStation}"
+                Summary = withMessage
             });
             return this;
         }
