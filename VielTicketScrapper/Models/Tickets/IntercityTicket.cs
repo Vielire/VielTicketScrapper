@@ -13,5 +13,6 @@ namespace VielTicketScrapper.Models.Tickets
         public int TrainCarNumber { get; set; }
         public int TravelDistance { get; set; }
         public string Seat { get; set; }
+        public DateTime PaidDate { get; set; }
     }
 }

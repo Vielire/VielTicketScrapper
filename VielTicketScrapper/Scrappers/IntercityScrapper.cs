@@ -26,8 +26,9 @@ namespace VielTicketScrapper.Scrappers
 
             Model.TicketNumber = GetTicketNumber();
             Model.TravelerName = GetTravelerName();
+            Model.PaidDate = GetPaymentDate();
 
-            Model.DepartureDateTime = GetDateTime(multiDataLine_StartStation);
+            Model.DepartureDateTime = GetDateTime(multiDataLine_StartStation, Model.PaidDate);
             Model.StartingStation = GetStationName(multiDataLine_StartStation);
             Model.TrainType = GetTrainType(multiDataLine_StartStation);
             Model.TrainNumber = GetTrainNumber(multiDataLine_StartStation);
@@ -36,11 +37,19 @@ namespace VielTicketScrapper.Scrappers
             Model.TicketPriceCurrency = GetTicketPriceCurrency(multiDataLine_StartStation);
             Model.Seat = GetSeat(multiDataLine_StartStation);
 
-            Model.ArrivalDateTime = GetDateTime(multiDataLine_FinalStation);
+            Model.ArrivalDateTime = GetDateTime(multiDataLine_FinalStation, Model.PaidDate);
             Model.FinalStation = GetStationName(multiDataLine_FinalStation);
             Model.TrainCarNumber = GetTrainCarNumber(multiDataLine_FinalStation);
             
             return Model;
+        }
+
+        protected DateTime GetPaymentDate()
+        {
+            string ticketLine = allLines.SkipWhile(line => !line.Contains("Zapłacono i wystawiono")).Skip(1).FirstOrDefault();
+            return String.IsNullOrWhiteSpace(ticketLine)
+                ? throw new NotSupportedException("Payment date not found.")
+                : new DateTime(Convert.ToInt32(ticketLine[..4]), Convert.ToInt32(ticketLine[5..7]), Convert.ToInt32(ticketLine[8..10]));
         }
         protected string GetTicketNumber()
         {
@@ -56,7 +65,7 @@ namespace VielTicketScrapper.Scrappers
                 ? "No traveler found"
                 : travelerLine.Split(": ")[1];
         }
-        protected static DateTime GetDateTime(string line)
+        protected static DateTime GetDateTime(string line, DateTime paymentDay)
         {
             Match timeMatch = Regex.Match(line, TimeRegexPattern);
             Match dateMatch = Regex.Match(line, DateRegexPattern);
@@ -64,12 +73,24 @@ namespace VielTicketScrapper.Scrappers
             if(!timeMatch.Success || !dateMatch.Success)
                 throw new NotSupportedException(NotSupportedExMessage);
 
-            return new DateTime(DateTime.Now.Year,
+            //There is no year of departure or arrival on the ticket, but there is constraint on the
+            //Intercity site, that tickets can be purchased up to one month (30 days) before departure.
+            //It is also not possible to buy a ticket whose departure date and time have passed.
+            //Therefore, we can assume that the date of departure should be a maximum of one month later
+            //than the date of purchase of the ticket.
+            DateTime dt = new DateTime(paymentDay.Year,
                                 Convert.ToInt32(dateMatch.Value.Substring(3, 2)),
                                 Convert.ToInt32(dateMatch.Value.Substring(0, 2)),
                                 Convert.ToInt32(timeMatch.Value.Substring(0, 2)),
                                 Convert.ToInt32(timeMatch.Value.Substring(3, 2)),
                                 0);
+
+            while(dt < paymentDay)
+            {
+                dt.AddYears(1);
+            }
+
+            return dt;
         }
         protected static string GetStationName(string line)
         {
