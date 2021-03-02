@@ -14,22 +14,19 @@ namespace VielTicketScrapper.Builders
     }
     interface IEventOptions : IEventCreate
     {
-        IEventOptions AddEventAlarm(int minutesBefore, string withMessage);
+        IEventOptions AddEventAlarm(int minutesBeforeEvent, string withMessage);
         IEventOptions AddEventDescription(string description);
     }
     class ICal : IEventCreate, IEventOptions
     {
-        private readonly Calendar calendar;
+        private Calendar calendar;
         private CalendarEvent CalendarEventHolder;
-        
-        private IList<CalendarEvent> CalendarEvents {get; set;}
 
         private ICal()
         {
             // Outlook needs property Method = CalendarMethods.Publish cause "REQUEST" will
             // update an existing event with the same UID (Unique ID) and a newer timestamp.
             calendar = new() { Method = CalendarMethods.Publish };
-            CalendarEvents = new List<CalendarEvent>();
         }
 
         public static IEventCreate Create()
@@ -39,8 +36,7 @@ namespace VielTicketScrapper.Builders
 
         public IEventOptions AddEvent(string title, DateTime eventStart, DateTime eventEnd)
         {
-            if (CalendarEventHolder != null)
-                CalendarEvents.Add(CalendarEventHolder);
+            AppendCurrentEvent();
 
             CalendarEventHolder = new()
             {
@@ -60,12 +56,12 @@ namespace VielTicketScrapper.Builders
             return this;
         }
 
-        public IEventOptions AddEventAlarm(int minutesBeforeDeparture, string withMessage)
+        public IEventOptions AddEventAlarm(int minutesBeforeEvent, string withMessage)
         {
             CalendarEventHolder.Alarms.Add(new()
             {
                 Action = AlarmAction.Display,
-                Trigger = new Trigger(TimeSpan.FromTicks(CalendarEventHolder.Start.AddMinutes(-minutesBeforeDeparture).Ticks)),
+                Trigger = new Trigger(TimeSpan.FromTicks(CalendarEventHolder.Start.AddMinutes(-minutesBeforeEvent).Ticks)),
                 Summary = withMessage
             });
             return this;
@@ -73,21 +69,19 @@ namespace VielTicketScrapper.Builders
 
         public override string ToString()
         {
-            if (CalendarEventHolder != null) {
-                CalendarEvents.Add(CalendarEventHolder);
-                CalendarEventHolder = null;
-            };
+            AppendCurrentEvent();
 
-            if (CalendarEvents.Any()) { 
-                foreach (CalendarEvent e in CalendarEvents)
-                {
-                    calendar.Events.Add(e);
-                }
-                return new CalendarSerializer(new SerializationContext()).SerializeToString(calendar);
-            }
-            else
-            {
-                return "No events in calendar object found";
+            return new CalendarSerializer(new SerializationContext()).SerializeToString(calendar);
+        }
+
+        /// <summary>
+        /// Appends current Event to the calendar object and sets CalendarEventHolder to null
+        /// </summary>
+        private void AppendCurrentEvent()
+        {
+            if (CalendarEventHolder != null) { 
+                calendar.Events.Add(CalendarEventHolder);
+                CalendarEventHolder = null;
             }
         }
     }
