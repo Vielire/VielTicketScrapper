@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using VielTicketScrapper.Models.Tickets;
 using System.Threading;
+using System.IO;
 
 namespace VielTicketScrapper.Scrappers
 {
@@ -12,7 +13,7 @@ namespace VielTicketScrapper.Scrappers
         private const string TimeRegexPattern = @"[0-2]\d[:][0-5]\d";
         private const string DateRegexPattern = @"[0-3]\d[.][0-1]\d";
 
-        private IntercityTicket Model = new();
+        protected IntercityTicket Model = new();
 
         public override IntercityTicket ParseToTicket()
         {
@@ -70,7 +71,7 @@ namespace VielTicketScrapper.Scrappers
             Match timeMatch = Regex.Match(line, TimeRegexPattern);
             Match dateMatch = Regex.Match(line, DateRegexPattern);
 
-            if(!timeMatch.Success || !dateMatch.Success)
+            if (!timeMatch.Success || !dateMatch.Success)
                 throw new NotSupportedException(NotSupportedExMessage);
 
             //There is no year of departure or arrival on the ticket, but there is constraint on the
@@ -85,12 +86,19 @@ namespace VielTicketScrapper.Scrappers
                                 Convert.ToInt32(timeMatch.Value.Substring(3, 2)),
                                 0);
 
-            while(dt < paymentDay)
+            if (dt.Date >= paymentDay.Date)
+                return dt;
+            else 
             {
-                dt.AddYears(1);
+                do
+                {
+                    dt = dt.AddYears(1);
+                    if (dt.Year > paymentDay.Year && (dt < paymentDay || (dt.Subtract(paymentDay).TotalDays > 35)))
+                        throw new InvalidDataException("The day of buying the ticket is later than the date of departure, which is impossible for Intercity ticket system.");
+                    
+                } while (dt < paymentDay);
+                return dt;
             }
-
-            return dt;
         }
         protected static string GetStationName(string line)
         {
