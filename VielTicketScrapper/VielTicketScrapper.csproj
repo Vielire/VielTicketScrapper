@@ -16,4 +16,7 @@
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 	</ItemGroup>
+	<ItemGroup>
+	  <None Remove="ExampleFiles\Not_a_PDF_file.txt" />
+	</ItemGroup>
 </Project>

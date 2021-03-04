@@ -6,7 +6,7 @@ using System.Threading;
 
 namespace VielTicketScrapper.Scrappers
 {
-    class IntercityScrapper : Scrapper
+    public class IntercityScrapper : Scrapper
     {
         private const string NotSupportedExMessage = "You provided file that is not supported within IntercityScrapper class";
         private const string TimeRegexPattern = @"[0-2]\d[:][0-5]\d";

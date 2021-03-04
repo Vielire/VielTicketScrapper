@@ -1,18 +1,22 @@
 ﻿using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas.Parser;
 using iText.Kernel.Pdf.Canvas.Parser.Listener;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using VielTicketScrapper.Models.Tickets;
 
 namespace VielTicketScrapper.Scrappers
 {
-    abstract class Scrapper
+    public abstract class Scrapper
     {
         public IEnumerable<string> allLines;
 
         public virtual Scrapper ScrapPDF(string filePath)
         {
+            if (filePath[^3..].ToLower() != "pdf")
+                throw new NotSupportedException("File type not supporter.");
+
             StringBuilder sb = new();
             var pdfDocument = new PdfDocument(new PdfReader(filePath));
             var strategy = new LocationTextExtractionStrategy();

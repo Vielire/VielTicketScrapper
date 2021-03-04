@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31019.194
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VielTicketScrapper", "VielTicketScrapper\VielTicketScrapper.csproj", "{61717A01-BFB6-418F-9EE9-EFC2B84BA403}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VielTicketScrapper", "VielTicketScrapper\VielTicketScrapper.csproj", "{61717A01-BFB6-418F-9EE9-EFC2B84BA403}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VielTicketScrapper.UnitTests", "VielTicketScrapper.UnitTests\VielTicketScrapper.UnitTests.csproj", "{62837185-AC7E-4720-88FE-C6E83DAF1B91}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{61717A01-BFB6-418F-9EE9-EFC2B84BA403}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{61717A01-BFB6-418F-9EE9-EFC2B84BA403}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{61717A01-BFB6-418F-9EE9-EFC2B84BA403}.Release|Any CPU.Build.0 = Release|Any CPU
+		{62837185-AC7E-4720-88FE-C6E83DAF1B91}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{62837185-AC7E-4720-88FE-C6E83DAF1B91}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{62837185-AC7E-4720-88FE-C6E83DAF1B91}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{62837185-AC7E-4720-88FE-C6E83DAF1B91}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
