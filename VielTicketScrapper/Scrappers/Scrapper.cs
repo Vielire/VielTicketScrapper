@@ -15,7 +15,7 @@ namespace VielTicketScrapper.Scrappers
         public virtual Scrapper ScrapPDF(string filePath)
         {
             if (filePath[^3..].ToLower() != "pdf")
-                throw new NotSupportedException("File type not supporter.");
+                throw new NotSupportedException("File type not supported.");
 
             StringBuilder sb = new();
             var pdfDocument = new PdfDocument(new PdfReader(filePath));
