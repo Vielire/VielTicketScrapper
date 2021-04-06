@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace VielTicketScrapper.Models.Tickets
 {
-    abstract class Ticket
+    public abstract class Ticket
     {
         public string TicketNumber { get; set; }
         public decimal TicketPrice { get; set; }
