@@ -57,7 +57,7 @@ namespace VielTicketScrapper.Scrappers
             string ticketLine = allLines.Where(line => line.Contains("Nr biletu : ")).FirstOrDefault();
             return String.IsNullOrWhiteSpace(ticketLine)
                 ? "Ticket number not found"
-                : ticketLine.Split("Nr biletu : ")[1].Split(" ")[0];
+                : ticketLine.Split("Nr biletu : ")[1];
         }
         protected string GetTravelerName()
         {
