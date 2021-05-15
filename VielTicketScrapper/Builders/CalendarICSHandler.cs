@@ -8,33 +8,30 @@ using System.Linq;
 
 namespace VielTicketScrapper.Builders
 {
-    interface IEventCreate
+    interface ICalEvent
     {
-        IEventOptions AddEvent(string title, DateTime eventStart, DateTime eventEnd);
+        ICalEvent AddEvent(string title, DateTime eventStart, DateTime eventEnd);
+        ICalEvent AddEventAlarm(int minutesBeforeEvent, string withMessage);
+        ICalEvent AddEventDescription(string description);
     }
-    interface IEventOptions : IEventCreate
-    {
-        IEventOptions AddEventAlarm(int minutesBeforeEvent, string withMessage);
-        IEventOptions AddEventDescription(string description);
-    }
-    class ICal : IEventCreate, IEventOptions
+    class CalendarICSHandler : ICalEvent
     {
         private Calendar calendar;
         private CalendarEvent CalendarEventHolder;
 
-        private ICal()
+        private CalendarICSHandler()
         {
             // Outlook needs property Method = CalendarMethods.Publish cause "REQUEST" will
             // update an existing event with the same UID (Unique ID) and a newer timestamp.
             calendar = new() { Method = CalendarMethods.Publish };
         }
 
-        public static IEventCreate Create()
+        public static ICalEvent Create()
         {
-            return new ICal();
+            return new CalendarICSHandler();
         }
 
-        public IEventOptions AddEvent(string title, DateTime eventStart, DateTime eventEnd)
+        public ICalEvent AddEvent(string title, DateTime eventStart, DateTime eventEnd)
         {
             AppendCurrentEvent();
 
@@ -50,13 +47,13 @@ namespace VielTicketScrapper.Builders
             return this;
         }
 
-        public IEventOptions AddEventDescription(string description)
+        public ICalEvent AddEventDescription(string description)
         {
             CalendarEventHolder.Description = description;
             return this;
         }
 
-        public IEventOptions AddEventAlarm(int minutesBeforeEvent, string withMessage)
+        public ICalEvent AddEventAlarm(int minutesBeforeEvent, string withMessage)
         {
             CalendarEventHolder.Alarms.Add(new()
             {
