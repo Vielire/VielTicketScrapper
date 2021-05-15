@@ -43,9 +43,8 @@ namespace VielTicketScrapper
         }
         private static void Intercity(string filePath, ExportFileType to, bool verbose, IConsole console)
         {
-            string[] filepathParts = filePath.Split(Path.DirectorySeparatorChar);
-            string fileName = filepathParts[filepathParts.Length-1];
-            string folderPath = filePath.Substring(0, filePath.Length - fileName.Length);
+            string fileName = Path.GetFileName(filePath);
+            string folderPath = Path.GetDirectoryName(filePath);
             
             if (verbose)
                 coutVerbose($"About to scrap data from the '{fileName}' file...");

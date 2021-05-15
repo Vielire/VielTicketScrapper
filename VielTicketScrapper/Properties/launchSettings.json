@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "VielTicketScrapper": {
+      "commandName": "Project",
+      "commandLineArgs": "intercity \"ExampleFiles\\Example_Intercity.pdf\" --to iCal --verbose"
+    }
+  }
+}
