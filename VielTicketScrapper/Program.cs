@@ -61,7 +61,7 @@ namespace VielTicketScrapper
                 Directory.CreateDirectory(outputDirectory);
             }
 
-            ICalEvent icsHandler = CalendarICSHandler.Create();
+            ICalEvent icsHandler = CalendarICSBuilder.Create();
             foreach(var filePath in allFiles)
             {
                 Scrapper scrapper = new();
@@ -153,7 +153,7 @@ namespace VielTicketScrapper
 
                     string alarmMessage = $"Pociąg z {ticket.StartingStation} o godz. {ticket.DepartureDateTime:HH:mm}";
 
-                    var iCal = CalendarICSHandler.Create()
+                    var iCal = CalendarICSBuilder.Create()
                                     .AddEvent(eventTitle, ticket.DepartureDateTime, ticket.ArrivalDateTime)
                                     .AddEventDescription(eventDescription)
                                     .AddEventAlarm(15, alarmMessage)

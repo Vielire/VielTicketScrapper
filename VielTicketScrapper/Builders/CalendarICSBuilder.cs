@@ -14,12 +14,12 @@ namespace VielTicketScrapper.Builders
         ICalEvent AddEventAlarm(int minutesBeforeEvent, string withMessage);
         ICalEvent AddEventDescription(string description);
     }
-    class CalendarICSHandler : ICalEvent
+    class CalendarICSBuilder : ICalEvent
     {
         private Calendar calendar;
         private CalendarEvent CalendarEventHolder;
 
-        private CalendarICSHandler()
+        private CalendarICSBuilder()
         {
             // Outlook needs property Method = CalendarMethods.Publish cause "REQUEST" will
             // update an existing event with the same UID (Unique ID) and a newer timestamp.
@@ -28,7 +28,7 @@ namespace VielTicketScrapper.Builders
 
         public static ICalEvent Create()
         {
-            return new CalendarICSHandler();
+            return new CalendarICSBuilder();
         }
 
         public ICalEvent AddEvent(string title, DateTime eventStart, DateTime eventEnd)
