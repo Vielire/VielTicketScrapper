@@ -1,13 +1,18 @@
-﻿using System;
+﻿using iText.Layout.Element;
+using System;
+using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Invocation;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using VielTicketScrapper.Builders;
 using VielTicketScrapper.Builders.Ticket;
 using VielTicketScrapper.Models.Enums;
 using VielTicketScrapper.Models.Tickets;
+using VielTicketScrapper.Processors;
 using VielTicketScrapper.Scrappers;
 
 namespace VielTicketScrapper
@@ -32,143 +37,76 @@ namespace VielTicketScrapper
         {
             var cmd = new RootCommand
             {
-                new Command("intercity", "Scrap the data from Intercity ticket!")
+                new Command("convert", "Convert PDF Intercity ticket(s) into .ics file! You need to provide file")
                 {
-                    new Argument<string>("filepath"),
-                    new Option<ExportFileType>("--to", "ical/text"),
+                    new Argument<string>("path"),
                     new Option<bool>("--verbose")
-                }.WithHandler(nameof(Intercity)),
-                new Command("scrapFolder", "Scrap the data from Intercity ticket!")
-                {
-                    new Argument<string>("folderPath"),
-                    new Option<ExportFileType>("--to", "ical/text"),
-                    new Option<bool>("--verbose")
-                }.WithHandler(nameof(ScrapFolder))
+                }.WithHandler(nameof(Convert))
             };
 
             return await cmd.InvokeAsync(args);
         }
 
-        private static void ScrapFolder(string folderPath, ExportFileType to, bool verbose, IConsole console)
+        private static void Convert(string path, bool verbose, IConsole console)
         {
-            if (verbose)
-                coutVerbose($"About to scrap data from the folder [{folderPath}]");
+            List<string> allFiles = new();
+            string outputDirectory;
 
-            string[] allFiles = Directory.GetFiles(folderPath, "*.pdf");
-            string outputDirectory = Path.Combine(folderPath, "Processed", DateTime.Now.ToString("yyyyMMddhhmmss"));
+            FileAttributes attr = File.GetAttributes(path);
+            if (attr.HasFlag(FileAttributes.Directory))
+            {
+                outputDirectory = Path.Combine(path, "Processed", DateTime.Now.ToString("yyyyMMddhhmmss"));
+
+                if (verbose)
+                    coutVerbose($"About to scrap data from the folder [{path}]");
+
+                allFiles = Directory.GetFiles(path, "*.pdf").ToList<string>();
+            }
+            else
+            {
+                outputDirectory = Path.Combine(Path.GetDirectoryName(path), "Processed", DateTime.Now.ToString("yyyyMMddhhmmss"));
+
+                if (verbose)
+                    coutVerbose($"About to scrap data from the file [{Path.GetFileName(path)}]");
+
+                if (Path.GetExtension(path) != ".pdf")
+                {
+                    coutError("Only PDF files are supported!");
+                    Environment.Exit(1006); // ERROR_FILE_INVALID
+                }
+                allFiles.Add(path);
+            }
+
             if (!Directory.Exists(outputDirectory))
             {
                 Directory.CreateDirectory(outputDirectory);
             }
 
-            ICalEvent icsHandler = CalendarICSBuilder.Create();
-            foreach(var filePath in allFiles)
+            ICalendarICSBuilder iCSBuilder = CalendarICSBuilder.Create();
+
+            foreach(string filePath in allFiles)
             {
                 Scrapper scrapper = new();
                 scrapper.ScrapPDF(filePath);
 
                 IntercityModelBuilder ticketBuilder = new(scrapper.allLines);
-                try {
-                    IntercityTicket ticket = ticketBuilder.Build();
-                    if (verbose) coutVerbose($"Data from [{Path.GetFileName(filePath)}] scrapped sucessfully...");
+                IntercityTicket ticket = ticketBuilder.Build();
 
-                    switch (to)
-                    {
-                        case ExportFileType.ICal:
-                            string eventTitle = $"{ticket.TrainType} {ticket.TrainNumber} | {ticket.StartingStation} - {ticket.FinalStation}, {ticket.TravelerName}";
-                            string eventDescription = $"Nr biletu: {ticket.TicketNumber}\n" +
-                                                      $"Nr wagonu: {ticket.TrainCarNumber}\n" +
-                                                      $"Miejsce: { ticket.Seat}\n" +
-                                                      $"Czas podróży: {TimeSpan.FromTicks(ticket.ArrivalDateTime.Ticks - ticket.DepartureDateTime.Ticks):hh\\:mm} \n" +
-                                                      $"Długość trasy: {ticket.TravelDistance} km\n";
+                TicketToIcsProcessor.Intercity(ticket, ref iCSBuilder);
 
-                            string alarmMessage = $"Pociąg z {ticket.StartingStation} o godz. {ticket.DepartureDateTime:HH:mm}";
-
-                            icsHandler.AddEvent(eventTitle, ticket.DepartureDateTime, ticket.ArrivalDateTime)
-                                      .AddEventDescription(eventDescription)
-                                      .AddEventAlarm(15, alarmMessage)
-                                      .AddEventAlarm(2 * 60, alarmMessage)
-                                      .AddEventAlarm(24 * 60, alarmMessage);
-
-                            if (verbose) coutVerbose($"{ticket.TicketNumber} processed sucessfully...");
-                            File.Move(filePath, Path.Combine(outputDirectory, Path.GetFileName(filePath)), true);
-
-                            break;
-                        default:
-                            coutError("No ExportFileType passed to switch-case.");
-                            break;
-                    }
-                }
-                catch (NotSupportedException e)
-                {
-                    coutError($"{Path.GetFileName(filePath)} is not valid Intercity Ticket file. System error: {e.Message}");
-                    return;
-                }
-                catch (Exception e)
-                {
-                    coutError($"{Path.GetFileName(filePath)} is not valid Intercity Ticket file. System error: {e.Message}");
-                    return;
-                }
+                File.Copy(filePath, Path.Combine(outputDirectory, Path.GetFileName(filePath)), true);
             }
-            File.WriteAllText(Path.Combine(outputDirectory, "IntercityTicketsEvents.ics"), icsHandler.ToString());
-            coutSuccess($"All done! You should find .ics file in the [{outputDirectory}] directory.");
-        }
-
-        private static void Intercity(string filePath, ExportFileType to, bool verbose, IConsole console)
-        {
-            string fileName = Path.GetFileName(filePath);
-            string folderPath = Path.GetDirectoryName(filePath);
             
-            if (verbose)
-                coutVerbose($"About to scrap data from the '{fileName}' file...");
+            File.WriteAllText(Path.Combine(outputDirectory, "IntercityTicketsEvents.ics"), iCSBuilder.ToString());
+            coutSuccess($"All done! You should find .ics file in the [{outputDirectory}] directory which should be opened by now.");
 
-            Scrapper scrapper = new();
-            IntercityModelBuilder ticketBuilder = new(scrapper.allLines);
-            IntercityTicket ticket = new();
-            try
+            ProcessStartInfo startInfo = new()
             {
-                scrapper.ScrapPDF(filePath);
-                 ticket = ticketBuilder.Build();
-            }
-            catch(NotSupportedException e)
-            {
-                coutError(e.Message);
-                Environment.Exit(1006); // ERROR_FILE_INVALID
-            }
-            catch(Exception e)
-            {
-                coutError(e.Message);
-                Environment.Exit(13); //ERROR_INVALID_DATA
-            }
+                Arguments = outputDirectory,
+                FileName = "explorer.exe"
+            };
 
-            switch (to)
-            {
-                case ExportFileType.ICal:
-                    string eventTitle = $"{ticket.TrainType} | {ticket.StartingStation} - {ticket.FinalStation}, {ticket.TravelerName}";
-                    string eventDescription = $"Nr biletu: {ticket.TicketNumber}\n" +
-                                              $"Nr wagonu: {ticket.TrainCarNumber}\n" +
-                                              $"Miejsce: { ticket.Seat}\n" +
-                                              $"Czas podróży: {TimeSpan.FromTicks(ticket.ArrivalDateTime.Ticks - ticket.DepartureDateTime.Ticks):hh\\:mm} \n" +
-                                              $"Długość trasy: {ticket.TravelDistance} km\n";
-
-                    string alarmMessage = $"Pociąg z {ticket.StartingStation} o godz. {ticket.DepartureDateTime:HH:mm}";
-
-                    var iCal = CalendarICSBuilder.Create()
-                                    .AddEvent(eventTitle, ticket.DepartureDateTime, ticket.ArrivalDateTime)
-                                    .AddEventDescription(eventDescription)
-                                    .AddEventAlarm(15, alarmMessage)
-                                    .AddEventAlarm(2 * 60, alarmMessage)
-                                    .AddEventAlarm(24 * 60, alarmMessage);
-
-                    File.WriteAllText(folderPath + DateTime.Now.ToString("yyyyMMddhhmmss_") + ticket.TicketNumber + ".ics", iCal.ToString());
-                    coutSuccess("You should find iCal file next to the ticket file");
-                    break;
-                default:
-                    coutError("No ExportFileType passed to switch-case.");
-                    break;
-            }
-
-            coutSuccess($"All done!");
+            System.Diagnostics.Process.Start(startInfo);
         }
 
         private static Command WithHandler(this Command command, string methodName)

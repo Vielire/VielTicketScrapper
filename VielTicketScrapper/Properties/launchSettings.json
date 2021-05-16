@@ -2,7 +2,7 @@
   "profiles": {
     "VielTicketScrapper": {
       "commandName": "Project",
-      "commandLineArgs": "scrapFolder \"C:\\Users\\pjanikowski\\Documents\\Tickets\" --to iCal --verbose"
+      "commandLineArgs": "convert \"C:\\Users\\pjanikowski\\Documents\\Tickets\\bilet_112452025.pdf\" --verbose"
     }
   }
 }

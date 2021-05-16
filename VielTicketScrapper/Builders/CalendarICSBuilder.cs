@@ -8,13 +8,7 @@ using System.Linq;
 
 namespace VielTicketScrapper.Builders
 {
-    interface ICalEvent
-    {
-        ICalEvent AddEvent(string title, DateTime eventStart, DateTime eventEnd);
-        ICalEvent AddEventAlarm(int minutesBeforeEvent, string withMessage);
-        ICalEvent AddEventDescription(string description);
-    }
-    class CalendarICSBuilder : ICalEvent
+    public class CalendarICSBuilder : ICalendarICSBuilder
     {
         private Calendar calendar;
         private CalendarEvent CalendarEventHolder;
@@ -26,12 +20,12 @@ namespace VielTicketScrapper.Builders
             calendar = new() { Method = CalendarMethods.Publish };
         }
 
-        public static ICalEvent Create()
+        public static ICalendarICSBuilder Create()
         {
             return new CalendarICSBuilder();
         }
 
-        public ICalEvent AddEvent(string title, DateTime eventStart, DateTime eventEnd)
+        public ICalendarICSBuilder AddEvent(string title, DateTime eventStart, DateTime eventEnd)
         {
             AppendCurrentEvent();
 
@@ -47,13 +41,13 @@ namespace VielTicketScrapper.Builders
             return this;
         }
 
-        public ICalEvent AddEventDescription(string description)
+        public ICalendarICSBuilder AddEventDescription(string description)
         {
             CalendarEventHolder.Description = description;
             return this;
         }
 
-        public ICalEvent AddEventAlarm(int minutesBeforeEvent, string withMessage)
+        public ICalendarICSBuilder AddEventAlarm(int minutesBeforeEvent, string withMessage)
         {
             CalendarEventHolder.Alarms.Add(new()
             {
