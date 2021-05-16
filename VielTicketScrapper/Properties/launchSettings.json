@@ -2,7 +2,7 @@
   "profiles": {
     "VielTicketScrapper": {
       "commandName": "Project",
-      "commandLineArgs": "intercity \"ExampleFiles\\Example_Intercity.pdf\" --to iCal --verbose"
+      "commandLineArgs": "convert \"C:\\Users\\pjanikowski\\Documents\\Tickets\\bilet_112452025.pdf\" --verbose"
     }
   }
 }
