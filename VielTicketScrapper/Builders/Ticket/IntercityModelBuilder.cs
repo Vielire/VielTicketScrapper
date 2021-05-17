@@ -5,6 +5,7 @@ using VielTicketScrapper.Models.Tickets;
 using System.Threading;
 using System.IO;
 using System.Collections.Generic;
+using System.Text;
 
 namespace VielTicketScrapper.Builders.Ticket
 {
@@ -17,10 +18,13 @@ namespace VielTicketScrapper.Builders.Ticket
         protected IntercityTicket Model = new();
 
         private readonly IEnumerable<string> allLines;
+        private readonly List<string> allLinesAsList;
+
 
         public IntercityModelBuilder(IEnumerable<string> allLines)
         {
             this.allLines = allLines;
+            this.allLinesAsList = allLines.ToList();
         }
         public IntercityTicket Build()
         {
@@ -43,7 +47,7 @@ namespace VielTicketScrapper.Builders.Ticket
             Model.TravelDistance = GetTravelDistance(multiDataLine_StartStation);
             Model.TicketPrice = GetTicketPrice(multiDataLine_StartStation);
             Model.TicketPriceCurrency = GetTicketPriceCurrency(multiDataLine_StartStation);
-            Model.Seat = GetSeat(multiDataLine_StartStation);
+            Model.Seat = GetSeats(multiDataLine_StartStation);
 
             Model.ArrivalDateTime = GetDateTime(multiDataLine_FinalStation, Model.PaidDate);
             Model.FinalStation = GetStationName(multiDataLine_FinalStation);
@@ -68,10 +72,18 @@ namespace VielTicketScrapper.Builders.Ticket
         }
         protected string GetTravelerName()
         {
-            string travelerLine = allLines.Where(line => line.Contains("Podróżny")).FirstOrDefault();
-            return String.IsNullOrWhiteSpace(travelerLine)
-                ? "No traveler found"
-                : travelerLine.Split(": ")[1];
+            int travelerLineIndex = allLinesAsList.FindIndex(line => line.Contains("Podróżny"));
+            if (travelerLineIndex == -1) { 
+                return "No traveler found";
+            }
+
+            string travelerName = allLinesAsList[travelerLineIndex].Split(": ")[1];
+
+            if(!allLinesAsList[travelerLineIndex+1].StartsWith("Informacja o cenie")){
+                travelerName = String.Concat(travelerName, " ", allLinesAsList[travelerLineIndex + 1]);
+            }
+
+            return travelerName;
         }
         protected static DateTime GetDateTime(string line, DateTime paymentDay)
         {
@@ -140,20 +152,26 @@ namespace VielTicketScrapper.Builders.Ticket
 
             return Convert.ToInt32(line[(timeMatch.Index + 6)..].Split(" ")[2]);
         }
-        protected static string GetSeat(string line)
+        protected static string GetSeats(string line)
         {
             Match timeMatch = Regex.Match(line, TimeRegexPattern);
             if (!timeMatch.Success)
                 throw new NotSupportedException(NotSupportedExMessage);
 
-            string seat = line[(timeMatch.Index + 6)..].Split(" ")[3];
-            string seatNumber = seat[0..^1];
-            string seatType = seat[^1..];
+            string[] textPartsAfterTime = line[(timeMatch.Index + 6)..].Split(" ");
+            List<string> seats = new();
+            for(int i = 3; i<textPartsAfterTime.Length - 2; i++)
+            {
+                string seatOnTicket = textPartsAfterTime[i].Replace(",", "");
+                string seatIndicator = seatOnTicket[^1..];
+                string seatType = seatIndicator == "o" ? " okno"
+                 : seatIndicator == "ś" ? " środek"
+                 : seatIndicator == "k" ? " korytarz" :
+                 "";
+                seats.Add(seatOnTicket[..^1] + seatType);
+            }
 
-            return seatType == "o" ? seatNumber + " okno"
-                 : seatType == "ś" ? seatNumber + " środek"
-                 : seatType == "k" ? seatNumber + " korytarz"
-                 : null;
+            return seats.Count > 0 ? String.Join(", ", seats) : "No seat found on the ticket.";
         }
         protected static decimal GetTicketPrice(string line)
         {
@@ -163,7 +181,18 @@ namespace VielTicketScrapper.Builders.Ticket
 
             char decimalSeparator = Convert.ToChar(Thread.CurrentThread.CurrentCulture.NumberFormat.NumberDecimalSeparator);
 
-            return Convert.ToDecimal(line[(timeMatch.Index + 6)..].Split(" ")[4].Replace(',', decimalSeparator));
+            string textAfterTime = line[(timeMatch.Index + 6)..^3];
+            int indexOfLastSpace = textAfterTime.LastIndexOf(' ');
+            string priceShouldBeHere;
+            if(indexOfLastSpace != -1)
+            {
+                priceShouldBeHere = textAfterTime[(indexOfLastSpace + 1)..];
+                return Convert.ToDecimal(priceShouldBeHere.Replace(',', decimalSeparator));
+            }
+            else
+            {
+                throw new NotSupportedException(NotSupportedExMessage);
+            }
         }
         protected static string GetTicketPriceCurrency(string line)
         {

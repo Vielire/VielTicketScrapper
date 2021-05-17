@@ -18,7 +18,7 @@ namespace VielTicketScrapper.Processors
                 string eventTitle = $"{ticket.TrainType} {ticket.TrainNumber} | {ticket.StartingStation} - {ticket.FinalStation}, {ticket.TravelerName}";
                 string eventDescription = $"Nr biletu: {ticket.TicketNumber}\n" +
                                             $"Nr wagonu: {ticket.TrainCarNumber}\n" +
-                                            $"Miejsce: { ticket.Seat}\n" +
+                                            $"Miejsce: {ticket.Seat} \n" +
                                             $"Czas podróży: {TimeSpan.FromTicks(ticket.ArrivalDateTime.Ticks - ticket.DepartureDateTime.Ticks):hh\\:mm} \n" +
                                             $"Długość trasy: {ticket.TravelDistance} km\n";
 

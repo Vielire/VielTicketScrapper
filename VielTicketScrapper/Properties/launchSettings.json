@@ -2,7 +2,7 @@
   "profiles": {
     "VielTicketScrapper": {
       "commandName": "Project",
-      "commandLineArgs": "convert \"C:\\Users\\pjanikowski\\Documents\\Tickets\\bilet_112452025.pdf\" --verbose"
+      "commandLineArgs": "convert \"C:\\Users\\pjanikowski\\Documents\\Tickets\" --verbose"
     }
   }
 }
