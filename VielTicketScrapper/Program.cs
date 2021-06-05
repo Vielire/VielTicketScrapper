@@ -1,12 +1,18 @@
-﻿using System;
+﻿using iText.Layout.Element;
+using System;
+using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Invocation;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using VielTicketScrapper.Builders;
+using VielTicketScrapper.Builders.Ticket;
 using VielTicketScrapper.Models.Enums;
 using VielTicketScrapper.Models.Tickets;
+using VielTicketScrapper.Processors;
 using VielTicketScrapper.Scrappers;
 
 namespace VielTicketScrapper
@@ -31,69 +37,76 @@ namespace VielTicketScrapper
         {
             var cmd = new RootCommand
             {
-                new Command("intercity", "Scrap the data from Intercity ticket!")
+                new Command("convert", "Convert PDF Intercity ticket(s) into .ics file! You need to provide file")
                 {
-                    new Argument<string>("filepath"),
-                    new Option<ExportFileType>("--to", "ical/text"),
+                    new Argument<string>("path"),
                     new Option<bool>("--verbose")
-                }.WithHandler(nameof(Intercity))
+                }.WithHandler(nameof(Convert))
             };
 
             return await cmd.InvokeAsync(args);
         }
-        private static void Intercity(string filePath, ExportFileType to, bool verbose, IConsole console)
+
+        private static void Convert(string path, bool verbose, IConsole console)
         {
-            string[] filepathParts = filePath.Split(Path.DirectorySeparatorChar);
-            string fileName = filepathParts[filepathParts.Length-1];
-            string folderPath = filePath.Substring(0, filePath.Length - fileName.Length);
-            
-            if (verbose)
-                coutVerbose($"About to scrap data from the '{fileName}' file...");
+            List<string> allFiles = new();
+            string outputDirectory;
 
-            try
+            FileAttributes attr = File.GetAttributes(path);
+            if (attr.HasFlag(FileAttributes.Directory))
             {
-                IntercityScrapper scrapper = new IntercityScrapper();
-                IntercityTicket ticket = (IntercityTicket)scrapper.ScrapPDF(filePath).ParseToTicket();
+                outputDirectory = Path.Combine(path, "Processed", DateTime.Now.ToString("yyyyMMddhhmmss"));
 
-                switch (to)
+                if (verbose)
+                    coutVerbose($"About to scrap data from the folder [{path}]");
+
+                allFiles = Directory.GetFiles(path, "*.pdf").ToList<string>();
+            }
+            else
+            {
+                outputDirectory = Path.Combine(Path.GetDirectoryName(path), "Processed", DateTime.Now.ToString("yyyyMMddhhmmss"));
+
+                if (verbose)
+                    coutVerbose($"About to scrap data from the file [{Path.GetFileName(path)}]");
+
+                if (Path.GetExtension(path) != ".pdf")
                 {
-                    case ExportFileType.ICal:
-                        string eventTitle = $"{ticket.TrainType} | {ticket.StartingStation} - {ticket.FinalStation}, {ticket.TravelerName}";
-                        string eventDescription = $"Nr biletu: {ticket.TicketNumber}\n" +
-                                                  $"Nr wagonu: {ticket.TrainCarNumber}\n" +
-                                                  $"Miejsce: { ticket.Seat}\n" +
-                                                  $"Czas podróży: {TimeSpan.FromTicks(ticket.ArrivalDateTime.Ticks - ticket.DepartureDateTime.Ticks):hh\\:mm} \n" +
-                                                  $"Długość trasy: {ticket.TravelDistance} km\n";
-
-                        string alarmMessage = $"Pociąg z {ticket.StartingStation} o godz. {ticket.DepartureDateTime:HH:mm}";
-
-                        var iCal = ICal.Create()
-                                        .AddEvent(eventTitle, ticket.DepartureDateTime, ticket.ArrivalDateTime)
-                                        .AddEventDescription(eventDescription)
-                                        .AddEventAlarm(15, alarmMessage)
-                                        .AddEventAlarm(2 * 60, alarmMessage)
-                                        .AddEventAlarm(24 * 60, alarmMessage);
-
-                        File.WriteAllText(folderPath + DateTime.Now.ToString("yyyyMMddhhmmss_") + ticket.TicketNumber + ".ics", iCal.ToString());
-                        cout("You should find iCal file next to the ticket file");
-                        break;
-                    default:
-                        cout("No ExportFileType passed to switch-case. Something went really wrong...");
-                        break;
+                    coutError("Only PDF files are supported!");
+                    Environment.Exit(1006); // ERROR_FILE_INVALID
                 }
+                allFiles.Add(path);
+            }
 
-                coutSuccess($"All done!");
-            }
-            catch(NotSupportedException e)
+            if (!Directory.Exists(outputDirectory))
             {
-                coutError(e.Message);
-                Environment.Exit(1006); // ERROR_FILE_INVALID
+                Directory.CreateDirectory(outputDirectory);
             }
-            catch(Exception e)
+
+            ICalendarICSBuilder iCSBuilder = CalendarICSBuilder.Create();
+
+            foreach(string filePath in allFiles)
             {
-                coutError(e.Message);
-                Environment.Exit(13); //ERROR_INVALID_DATA
+                Scrapper scrapper = new();
+                scrapper.ScrapPDF(filePath);
+
+                IntercityModelBuilder ticketBuilder = new(scrapper.allLines);
+                IntercityTicket ticket = ticketBuilder.Build();
+
+                TicketToIcsProcessor.Intercity(ticket, ref iCSBuilder);
+
+                File.Copy(filePath, Path.Combine(outputDirectory, Path.GetFileName(filePath)), true);
             }
+            
+            File.WriteAllText(Path.Combine(outputDirectory, "IntercityTicketsEvents.ics"), iCSBuilder.ToString());
+            coutSuccess($"All done! You should find .ics file in the [{outputDirectory}] directory which should be opened by now.");
+
+            ProcessStartInfo startInfo = new()
+            {
+                Arguments = outputDirectory,
+                FileName = "explorer.exe"
+            };
+
+            System.Diagnostics.Process.Start(startInfo);
         }
 
         private static Command WithHandler(this Command command, string methodName)

@@ -8,33 +8,24 @@ using System.Linq;
 
 namespace VielTicketScrapper.Builders
 {
-    interface IEventCreate
-    {
-        IEventOptions AddEvent(string title, DateTime eventStart, DateTime eventEnd);
-    }
-    interface IEventOptions : IEventCreate
-    {
-        IEventOptions AddEventAlarm(int minutesBeforeEvent, string withMessage);
-        IEventOptions AddEventDescription(string description);
-    }
-    class ICal : IEventCreate, IEventOptions
+    public class CalendarICSBuilder : ICalendarICSBuilder
     {
         private Calendar calendar;
         private CalendarEvent CalendarEventHolder;
 
-        private ICal()
+        private CalendarICSBuilder()
         {
             // Outlook needs property Method = CalendarMethods.Publish cause "REQUEST" will
             // update an existing event with the same UID (Unique ID) and a newer timestamp.
             calendar = new() { Method = CalendarMethods.Publish };
         }
 
-        public static IEventCreate Create()
+        public static ICalendarICSBuilder Create()
         {
-            return new ICal();
+            return new CalendarICSBuilder();
         }
 
-        public IEventOptions AddEvent(string title, DateTime eventStart, DateTime eventEnd)
+        public ICalendarICSBuilder AddEvent(string title, DateTime eventStart, DateTime eventEnd)
         {
             AppendCurrentEvent();
 
@@ -50,13 +41,13 @@ namespace VielTicketScrapper.Builders
             return this;
         }
 
-        public IEventOptions AddEventDescription(string description)
+        public ICalendarICSBuilder AddEventDescription(string description)
         {
             CalendarEventHolder.Description = description;
             return this;
         }
 
-        public IEventOptions AddEventAlarm(int minutesBeforeEvent, string withMessage)
+        public ICalendarICSBuilder AddEventAlarm(int minutesBeforeEvent, string withMessage)
         {
             CalendarEventHolder.Alarms.Add(new()
             {

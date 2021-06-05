@@ -2,19 +2,20 @@
 using iText.Kernel.Pdf.Canvas.Parser;
 using iText.Kernel.Pdf.Canvas.Parser.Listener;
 using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Text;
 using VielTicketScrapper.Models.Tickets;
 
 namespace VielTicketScrapper.Scrappers
 {
-    public abstract class Scrapper
+    public class Scrapper
     {
         public IEnumerable<string> allLines;
 
-        public virtual Scrapper ScrapPDF(string filePath)
+        public void ScrapPDF(string filePath)
         {
-            if (filePath[^3..].ToLower() != "pdf")
+            if (Path.GetExtension(filePath).ToLower() != ".pdf")
                 throw new NotSupportedException("File type not supported.");
 
             StringBuilder sb = new();
@@ -34,9 +35,6 @@ namespace VielTicketScrapper.Scrappers
             }
 
             pdfDocument.Close();
-            return this;
         }
-        
-        public abstract Ticket ParseToTicket();
     }
 }
