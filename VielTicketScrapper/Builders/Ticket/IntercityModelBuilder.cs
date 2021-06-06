@@ -47,7 +47,8 @@ namespace VielTicketScrapper.Builders.Ticket
             Model.TravelDistance = GetTravelDistance(multiDataLine_StartStation);
             Model.TicketPrice = GetTicketPrice(multiDataLine_StartStation);
             Model.TicketPriceCurrency = GetTicketPriceCurrency(multiDataLine_StartStation);
-            Model.Seat = GetSeats(multiDataLine_StartStation);
+            
+            Model.Seat = GetSeats(multiDataLine_StartStation, multiDataLine_FinalStation);
 
             Model.ArrivalDateTime = GetDateTime(multiDataLine_FinalStation, Model.PaidDate);
             Model.FinalStation = GetStationName(multiDataLine_FinalStation);
@@ -136,7 +137,7 @@ namespace VielTicketScrapper.Builders.Ticket
             if (!timeMatch.Success)
                 throw new NotSupportedException(NotSupportedExMessage);
 
-            return line[(timeMatch.Index + 6)..].Split(" ")[0];
+            return line[(timeMatch.Index + 6)..].Split(" ").First();
         }
         protected static int GetTrainNumber(string line)
         {
@@ -154,26 +155,33 @@ namespace VielTicketScrapper.Builders.Ticket
 
             return Convert.ToInt32(line[(timeMatch.Index + 6)..].Split(" ")[2]);
         }
-        protected static string GetSeats(string line)
+        protected static string GetSeats(string startingStationLine, string finalStationLine)
         {
-            Match timeMatch = Regex.Match(line, TimeRegexPattern);
-            if (!timeMatch.Success)
-                throw new NotSupportedException(NotSupportedExMessage);
-
-            string[] textPartsAfterTime = line[(timeMatch.Index + 6)..].Split(" ");
-            List<string> seats = new();
-            for (int i = 3; i < textPartsAfterTime.Length - 2; i++)
+            if (finalStationLine.Contains("Bez gwarancji"))
             {
-                string seatOnTicket = textPartsAfterTime[i].Replace(",", "");
-                string seatIndicator = seatOnTicket[^1..];
-                string seatType = seatIndicator == "o" ? " okno"
-                 : seatIndicator == "ś" ? " środek"
-                 : seatIndicator == "k" ? " korytarz" :
-                 "";
-                seats.Add(seatOnTicket[..^1] + seatType);
+                return "Bez gwarancji miejsca do siedzenia";
             }
+            else
+            {
+                Match timeMatch = Regex.Match(startingStationLine, TimeRegexPattern);
+                if (!timeMatch.Success)
+                    throw new NotSupportedException(NotSupportedExMessage);
 
-            return seats.Count > 0 ? String.Join(", ", seats) : "No seat found on the ticket.";
+                string[] textPartsAfterTime = startingStationLine[(timeMatch.Index + 6)..].Split(" ");
+                List<string> seats = new();
+                for (int i = 3; i < textPartsAfterTime.Length - 2; i++)
+                {
+                    string seatOnTicket = textPartsAfterTime[i].Replace(",", "");
+                    string seatIndicator = seatOnTicket[^1..];
+                    string seatType = seatIndicator == "o" ? " okno"
+                     : seatIndicator == "ś" ? " środek"
+                     : seatIndicator == "k" ? " korytarz" :
+                     "";
+                    seats.Add(seatOnTicket[..^1] + seatType);
+                }
+
+                return seats.Count > 0 ? String.Join(", ", seats) : "No seat found on the ticket."; 
+            }
         }
         protected static decimal GetTicketPrice(string line)
         {
@@ -202,7 +210,7 @@ namespace VielTicketScrapper.Builders.Ticket
             if (!timeMatch.Success)
                 throw new NotSupportedException(NotSupportedExMessage);
 
-            return line[(timeMatch.Index + 6)..].Split(" ")[5] == "zł" ? "PLN" : "N/A"; ;
+            return line[(timeMatch.Index + 6)..].Split(" ").Last() == "zł" ? "PLN" : "N/A";
         }
         protected static int GetTrainCarNumber(string line)
         {
@@ -210,7 +218,7 @@ namespace VielTicketScrapper.Builders.Ticket
             if (!timeMatch.Success)
                 throw new NotSupportedException(NotSupportedExMessage);
 
-            return Convert.ToInt32(line[(timeMatch.Index + 6)..].Split(" ")[0]);
+            return Convert.ToInt32(line[(timeMatch.Index + 6)..].Split(" ").First());
         }
     }
 }

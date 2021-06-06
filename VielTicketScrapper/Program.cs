@@ -13,7 +13,6 @@ using VielTicketScrapper.Builders.Ticket;
 using VielTicketScrapper.Helpers;
 using VielTicketScrapper.Models.Enums;
 using VielTicketScrapper.Models.Tickets;
-using VielTicketScrapper.Processors;
 using VielTicketScrapper.Scrappers;
 
 namespace VielTicketScrapper

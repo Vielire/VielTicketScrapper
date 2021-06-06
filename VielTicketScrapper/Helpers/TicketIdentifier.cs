@@ -14,7 +14,7 @@ namespace VielTicketScrapper.Helpers
         {
             if (IsItIntercity(scrapper.allLines))
             {
-                return (IntercityModelBuilder)Activator.CreateInstance(Type.GetType(nameof(IntercityModelBuilder)));
+                return new IntercityModelBuilder(scrapper.allLines);
             }
             //else if (IsItPolregio(scrapper.allLines))
             //{
