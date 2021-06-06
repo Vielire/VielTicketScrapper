@@ -9,7 +9,7 @@ using System.Text;
 
 namespace VielTicketScrapper.Builders.Ticket
 {
-    public class IntercityModelBuilder
+    public class IntercityModelBuilder : ITicketBuilder
     {
         private const string NotSupportedExMessage = "You provided file that is not supported within IntercityScrapper class";
         private const string TimeRegexPattern = @"[0-2]\d[:][0-5]\d";
@@ -26,7 +26,7 @@ namespace VielTicketScrapper.Builders.Ticket
             this.allLines = allLines;
             this.allLinesAsList = allLines.ToList();
         }
-        public IntercityTicket Build()
+        public Models.Tickets.Ticket Build()
         {
             //StartingStation, DepartureDateTime, TrainType, TrainNumber, TravelDistance, TicketPrice, TicketPriceCurrency
             string multiDataLine_StartStation = allLines.SkipWhile(x => !x.Contains("Stacja Data Godzina")).Skip(1).FirstOrDefault();
@@ -73,13 +73,15 @@ namespace VielTicketScrapper.Builders.Ticket
         protected string GetTravelerName()
         {
             int travelerLineIndex = allLinesAsList.FindIndex(line => line.Contains("Podróżny"));
-            if (travelerLineIndex == -1) { 
+            if (travelerLineIndex == -1)
+            {
                 return "No traveler found";
             }
 
             string travelerName = allLinesAsList[travelerLineIndex].Split(": ")[1];
 
-            if(!allLinesAsList[travelerLineIndex+1].StartsWith("Informacja o cenie")){
+            if (!allLinesAsList[travelerLineIndex + 1].StartsWith("Informacja o cenie"))
+            {
                 travelerName = String.Concat(travelerName, " ", allLinesAsList[travelerLineIndex + 1]);
             }
 
@@ -160,7 +162,7 @@ namespace VielTicketScrapper.Builders.Ticket
 
             string[] textPartsAfterTime = line[(timeMatch.Index + 6)..].Split(" ");
             List<string> seats = new();
-            for(int i = 3; i<textPartsAfterTime.Length - 2; i++)
+            for (int i = 3; i < textPartsAfterTime.Length - 2; i++)
             {
                 string seatOnTicket = textPartsAfterTime[i].Replace(",", "");
                 string seatIndicator = seatOnTicket[^1..];
@@ -184,7 +186,7 @@ namespace VielTicketScrapper.Builders.Ticket
             string textAfterTime = line[(timeMatch.Index + 6)..^3];
             int indexOfLastSpace = textAfterTime.LastIndexOf(' ');
             string priceShouldBeHere;
-            if(indexOfLastSpace != -1)
+            if (indexOfLastSpace != -1)
             {
                 priceShouldBeHere = textAfterTime[(indexOfLastSpace + 1)..];
                 return Convert.ToDecimal(priceShouldBeHere.Replace(',', decimalSeparator));

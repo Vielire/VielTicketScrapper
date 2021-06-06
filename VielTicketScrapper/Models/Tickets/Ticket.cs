@@ -17,5 +17,12 @@ namespace VielTicketScrapper.Models.Tickets
         public string FinalStation { get; set; }
         public DateTime DepartureDateTime { get; set; }
         public DateTime ArrivalDateTime { get; set; }
+
+        public virtual string GetAlarmMessage() { 
+            return $"Pociąg z {StartingStation} o godz. {DepartureDateTime:HH:mm}";
+        }
+
+        public abstract string GetEventTitle();
+        public abstract string GetEventDesc();
     }
 }
