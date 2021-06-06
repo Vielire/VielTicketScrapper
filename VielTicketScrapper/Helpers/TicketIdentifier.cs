@@ -10,16 +10,17 @@ namespace VielTicketScrapper.Helpers
 {
     public static class TicketIdentifier
     {
-        public static ITicketBuilder InstantiateTicketBuilder(Scrapper scrapper)
+        public static TicketBuilder InstantiateTicketBuilder(Scrapper scrapper)
         {
             if (IsItIntercity(scrapper.allLines))
             {
                 return new IntercityModelBuilder(scrapper.allLines);
             }
-            //else if (IsItPolregio(scrapper.allLines))
-            //{
-            //    return Activator.CreateInstance(Type.GetType(nameof(PolregioModelBuilder)));
-            //}
+            else if (IsItPolregio(scrapper.allLines))
+            {
+                //throw new NotSupportedException($"Polregio files are not supported yet.");
+                return new PolregioModelBuilder(scrapper.allLines);
+            }
             else
             {
                 throw new NotSupportedException($"Provided file [{scrapper.filePath}] is not supported");

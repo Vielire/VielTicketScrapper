@@ -10,15 +10,19 @@ namespace VielTicketScrapper.Models.Tickets
     {
         public DateTime ValidDateStart { get; set; }
         public int ValidDurationInHours { get; set; }
+        public string TrainNumber { get; set; }
 
         public override string GetEventDesc()
         {
-            throw new NotImplementedException();
+            return $"Nr biletu: {TicketNumber}\n" +
+                    $"Czas podróży: {TimeSpan.FromTicks(ArrivalDateTime.Ticks - DepartureDateTime.Ticks):hh\\:mm} \n" +
+                    $"Ważny w dniu: {ValidDateStart.ToLongDateString()} \n" +
+                    $"Ważny przez: {TimeSpan.FromHours(ValidDurationInHours):hh\\:mm} \n";
         }
 
         public override string GetEventTitle()
         {
-            throw new NotImplementedException();
+            return $"{TrainNumber} | {StartingStation} - {FinalStation}, {TravelerName}";
         }
     }
 }
