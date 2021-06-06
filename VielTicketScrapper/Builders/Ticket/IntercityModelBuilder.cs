@@ -212,13 +212,21 @@ namespace VielTicketScrapper.Builders.Ticket
 
             return line[(timeMatch.Index + 6)..].Split(" ").Last() == "zł" ? "PLN" : "N/A";
         }
-        protected static int GetTrainCarNumber(string line)
+        protected static int? GetTrainCarNumber(string line)
         {
-            Match timeMatch = Regex.Match(line, TimeRegexPattern);
-            if (!timeMatch.Success)
-                throw new NotSupportedException(NotSupportedExMessage);
+            if (line.Contains("Bez gwarancji"))
+            {
+                return null;
+            }
+            else
+            {
+                Match timeMatch = Regex.Match(line, TimeRegexPattern);
+                if (!timeMatch.Success)
+                    throw new NotSupportedException(NotSupportedExMessage);
 
-            return Convert.ToInt32(line[(timeMatch.Index + 6)..].Split(" ").First());
+                return Convert.ToInt32(line[(timeMatch.Index + 6)..].Split(" ").First());
+            }
+            
         }
     }
 }

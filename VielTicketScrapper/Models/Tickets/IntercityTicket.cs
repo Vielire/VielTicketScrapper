@@ -10,7 +10,7 @@ namespace VielTicketScrapper.Models.Tickets
     {
         public string TrainType { get; set; }
         public int TrainNumber { get; set; }
-        public int TrainCarNumber { get; set; }
+        public int? TrainCarNumber { get; set; }
         public int TravelDistance { get; set; }
         public string Seat { get; set; }
         public DateTime PaidDate { get; set; }
@@ -18,7 +18,7 @@ namespace VielTicketScrapper.Models.Tickets
         public override string GetEventDesc()
         {
             return $"Nr biletu: {TicketNumber}\n" +
-                    $"Nr wagonu: {TrainCarNumber}\n" +
+                    TrainCarNumber != null ? $"Nr wagonu: {TrainCarNumber}\n" : "" +
                     $"Miejsce: {Seat} \n" +
                     $"Czas podróży: {TimeSpan.FromTicks(ArrivalDateTime.Ticks - DepartureDateTime.Ticks):hh\\:mm} \n" +
                     $"Długość trasy: {TravelDistance} km\n";
