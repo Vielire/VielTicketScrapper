@@ -12,14 +12,15 @@ namespace VielTicketScrapper.Scrappers
     public class Scrapper
     {
         public IEnumerable<string> allLines;
-
+        public string filePath;
         public void ScrapPDF(string filePath)
         {
-            if (Path.GetExtension(filePath).ToLower() != ".pdf")
+            this.filePath = filePath;
+            if (Path.GetExtension(this.filePath).ToLower() != ".pdf")
                 throw new NotSupportedException("File type not supported.");
 
             StringBuilder sb = new();
-            var pdfDocument = new PdfDocument(new PdfReader(filePath));
+            var pdfDocument = new PdfDocument(new PdfReader(this.filePath));
             var strategy = new LocationTextExtractionStrategy();
 
             for (int i = 1; i <= pdfDocument.GetNumberOfPages(); ++i)

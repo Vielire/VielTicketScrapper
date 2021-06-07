@@ -10,9 +10,9 @@ using System.Reflection;
 using System.Threading.Tasks;
 using VielTicketScrapper.Builders;
 using VielTicketScrapper.Builders.Ticket;
+using VielTicketScrapper.Helpers;
 using VielTicketScrapper.Models.Enums;
 using VielTicketScrapper.Models.Tickets;
-using VielTicketScrapper.Processors;
 using VielTicketScrapper.Scrappers;
 
 namespace VielTicketScrapper
@@ -89,10 +89,14 @@ namespace VielTicketScrapper
                 Scrapper scrapper = new();
                 scrapper.ScrapPDF(filePath);
 
-                IntercityModelBuilder ticketBuilder = new(scrapper.allLines);
-                IntercityTicket ticket = ticketBuilder.Build();
+                var ticketBuilder = TicketIdentifier.InstantiateTicketBuilder(scrapper);
+                var ticket = ticketBuilder.Build();
 
-                TicketToIcsProcessor.Intercity(ticket, ref iCSBuilder);
+                iCSBuilder.AddEvent(ticket.GetEventTitle(), ticket.DepartureDateTime, ticket.ArrivalDateTime)
+                            .AddEventDescription(ticket.GetEventDesc())
+                            .AddEventAlarm(15, ticket.GetAlarmMessage())
+                            .AddEventAlarm(2 * 60, ticket.GetAlarmMessage())
+                            .AddEventAlarm(24 * 60, ticket.GetAlarmMessage());
 
                 File.Copy(filePath, Path.Combine(outputDirectory, Path.GetFileName(filePath)), true);
             }

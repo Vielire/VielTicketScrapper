@@ -9,24 +9,17 @@ using System.Text;
 
 namespace VielTicketScrapper.Builders.Ticket
 {
-    public class IntercityModelBuilder
+    public class IntercityModelBuilder : TicketBuilder
     {
-        private const string NotSupportedExMessage = "You provided file that is not supported within IntercityScrapper class";
-        private const string TimeRegexPattern = @"[0-2]\d[:][0-5]\d";
-        private const string DateRegexPattern = @"[0-3]\d[.][0-1]\d";
-
         protected IntercityTicket Model = new();
 
-        private readonly IEnumerable<string> allLines;
-        private readonly List<string> allLinesAsList;
+        public override string NotSupportedExMessage => "You provided file that is not supported within IntercityScrapper class";
 
-
-        public IntercityModelBuilder(IEnumerable<string> allLines)
+        public IntercityModelBuilder(IEnumerable<string> allLines) : base(allLines)
         {
-            this.allLines = allLines;
-            this.allLinesAsList = allLines.ToList();
+            
         }
-        public IntercityTicket Build()
+        public override Models.Tickets.Ticket Build()
         {
             //StartingStation, DepartureDateTime, TrainType, TrainNumber, TravelDistance, TicketPrice, TicketPriceCurrency
             string multiDataLine_StartStation = allLines.SkipWhile(x => !x.Contains("Stacja Data Godzina")).Skip(1).FirstOrDefault();
@@ -47,7 +40,8 @@ namespace VielTicketScrapper.Builders.Ticket
             Model.TravelDistance = GetTravelDistance(multiDataLine_StartStation);
             Model.TicketPrice = GetTicketPrice(multiDataLine_StartStation);
             Model.TicketPriceCurrency = GetTicketPriceCurrency(multiDataLine_StartStation);
-            Model.Seat = GetSeats(multiDataLine_StartStation);
+            
+            Model.Seat = GetSeats(multiDataLine_StartStation, multiDataLine_FinalStation);
 
             Model.ArrivalDateTime = GetDateTime(multiDataLine_FinalStation, Model.PaidDate);
             Model.FinalStation = GetStationName(multiDataLine_FinalStation);
@@ -73,19 +67,21 @@ namespace VielTicketScrapper.Builders.Ticket
         protected string GetTravelerName()
         {
             int travelerLineIndex = allLinesAsList.FindIndex(line => line.Contains("Podróżny"));
-            if (travelerLineIndex == -1) { 
+            if (travelerLineIndex == -1)
+            {
                 return "No traveler found";
             }
 
             string travelerName = allLinesAsList[travelerLineIndex].Split(": ")[1];
 
-            if(!allLinesAsList[travelerLineIndex+1].StartsWith("Informacja o cenie")){
+            if (!allLinesAsList[travelerLineIndex + 1].StartsWith("Informacja o cenie"))
+            {
                 travelerName = String.Concat(travelerName, " ", allLinesAsList[travelerLineIndex + 1]);
             }
 
             return travelerName;
         }
-        protected static DateTime GetDateTime(string line, DateTime paymentDay)
+        protected DateTime GetDateTime(string line, DateTime paymentDay)
         {
             Match timeMatch = Regex.Match(line, TimeRegexPattern);
             Match dateMatch = Regex.Match(line, DateRegexPattern);
@@ -119,7 +115,7 @@ namespace VielTicketScrapper.Builders.Ticket
                 return dt;
             }
         }
-        protected static string GetStationName(string line)
+        protected string GetStationName(string line)
         {
             Match dateMatch = Regex.Match(line, DateRegexPattern);
             if (!dateMatch.Success)
@@ -128,15 +124,15 @@ namespace VielTicketScrapper.Builders.Ticket
             return line.Substring(0, dateMatch.Index).Trim();
         }
 
-        protected static string GetTrainType(string line)
+        protected string GetTrainType(string line)
         {
             Match timeMatch = Regex.Match(line, TimeRegexPattern);
             if (!timeMatch.Success)
                 throw new NotSupportedException(NotSupportedExMessage);
 
-            return line[(timeMatch.Index + 6)..].Split(" ")[0];
+            return line[(timeMatch.Index + 6)..].Split(" ").First();
         }
-        protected static int GetTrainNumber(string line)
+        protected int GetTrainNumber(string line)
         {
             Match timeMatch = Regex.Match(line, TimeRegexPattern);
             if (!timeMatch.Success)
@@ -144,7 +140,7 @@ namespace VielTicketScrapper.Builders.Ticket
 
             return Convert.ToInt32(line[(timeMatch.Index + 6)..].Split(" ")[1]);
         }
-        protected static int GetTravelDistance(string line)
+        protected int GetTravelDistance(string line)
         {
             Match timeMatch = Regex.Match(line, TimeRegexPattern);
             if (!timeMatch.Success)
@@ -152,28 +148,35 @@ namespace VielTicketScrapper.Builders.Ticket
 
             return Convert.ToInt32(line[(timeMatch.Index + 6)..].Split(" ")[2]);
         }
-        protected static string GetSeats(string line)
+        protected string GetSeats(string startingStationLine, string finalStationLine)
         {
-            Match timeMatch = Regex.Match(line, TimeRegexPattern);
-            if (!timeMatch.Success)
-                throw new NotSupportedException(NotSupportedExMessage);
-
-            string[] textPartsAfterTime = line[(timeMatch.Index + 6)..].Split(" ");
-            List<string> seats = new();
-            for(int i = 3; i<textPartsAfterTime.Length - 2; i++)
+            if (finalStationLine.Contains("Bez gwarancji"))
             {
-                string seatOnTicket = textPartsAfterTime[i].Replace(",", "");
-                string seatIndicator = seatOnTicket[^1..];
-                string seatType = seatIndicator == "o" ? " okno"
-                 : seatIndicator == "ś" ? " środek"
-                 : seatIndicator == "k" ? " korytarz" :
-                 "";
-                seats.Add(seatOnTicket[..^1] + seatType);
+                return "Bez gwarancji miejsca do siedzenia";
             }
+            else
+            {
+                Match timeMatch = Regex.Match(startingStationLine, TimeRegexPattern);
+                if (!timeMatch.Success)
+                    throw new NotSupportedException(NotSupportedExMessage);
 
-            return seats.Count > 0 ? String.Join(", ", seats) : "No seat found on the ticket.";
+                string[] textPartsAfterTime = startingStationLine[(timeMatch.Index + 6)..].Split(" ");
+                List<string> seats = new();
+                for (int i = 3; i < textPartsAfterTime.Length - 2; i++)
+                {
+                    string seatOnTicket = textPartsAfterTime[i].Replace(",", "");
+                    string seatIndicator = seatOnTicket[^1..];
+                    string seatType = seatIndicator == "o" ? " okno"
+                     : seatIndicator == "ś" ? " środek"
+                     : seatIndicator == "k" ? " korytarz" :
+                     "";
+                    seats.Add(seatOnTicket[..^1] + seatType);
+                }
+
+                return seats.Count > 0 ? String.Join(", ", seats) : "No seat found on the ticket."; 
+            }
         }
-        protected static decimal GetTicketPrice(string line)
+        protected decimal GetTicketPrice(string line)
         {
             Match timeMatch = Regex.Match(line, TimeRegexPattern);
             if (!timeMatch.Success)
@@ -184,7 +187,7 @@ namespace VielTicketScrapper.Builders.Ticket
             string textAfterTime = line[(timeMatch.Index + 6)..^3];
             int indexOfLastSpace = textAfterTime.LastIndexOf(' ');
             string priceShouldBeHere;
-            if(indexOfLastSpace != -1)
+            if (indexOfLastSpace != -1)
             {
                 priceShouldBeHere = textAfterTime[(indexOfLastSpace + 1)..];
                 return Convert.ToDecimal(priceShouldBeHere.Replace(',', decimalSeparator));
@@ -194,21 +197,29 @@ namespace VielTicketScrapper.Builders.Ticket
                 throw new NotSupportedException(NotSupportedExMessage);
             }
         }
-        protected static string GetTicketPriceCurrency(string line)
+        protected string GetTicketPriceCurrency(string line)
         {
             Match timeMatch = Regex.Match(line, TimeRegexPattern);
             if (!timeMatch.Success)
                 throw new NotSupportedException(NotSupportedExMessage);
 
-            return line[(timeMatch.Index + 6)..].Split(" ")[5] == "zł" ? "PLN" : "N/A"; ;
+            return line[(timeMatch.Index + 6)..].Split(" ").Last() == "zł" ? "PLN" : "N/A";
         }
-        protected static int GetTrainCarNumber(string line)
+        protected int? GetTrainCarNumber(string line)
         {
-            Match timeMatch = Regex.Match(line, TimeRegexPattern);
-            if (!timeMatch.Success)
-                throw new NotSupportedException(NotSupportedExMessage);
+            if (line.Contains("Bez gwarancji"))
+            {
+                return null;
+            }
+            else
+            {
+                Match timeMatch = Regex.Match(line, TimeRegexPattern);
+                if (!timeMatch.Success)
+                    throw new NotSupportedException(NotSupportedExMessage);
 
-            return Convert.ToInt32(line[(timeMatch.Index + 6)..].Split(" ")[0]);
+                return Convert.ToInt32(line[(timeMatch.Index + 6)..].Split(" ").First());
+            }
+            
         }
     }
 }
