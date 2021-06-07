@@ -1,8 +1,7 @@
 {
   "profiles": {
     "VielTicketScrapper": {
-      "commandName": "Project",
-      "commandLineArgs": "convert \"%userprofile%\\documents\\Tickets\" --verbose"
+      "commandName": "Project"
     }
   }
 }

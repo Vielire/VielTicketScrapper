@@ -13,6 +13,15 @@ namespace VielTicketScrapper.Builders
         private Calendar calendar;
         private CalendarEvent CalendarEventHolder;
 
+        private int _eventsCount;
+
+        public int EventsCount
+        {
+            get { return _eventsCount; }
+            set { _eventsCount = value; }
+        }
+
+
         private CalendarICSBuilder()
         {
             // Outlook needs property Method = CalendarMethods.Publish cause "REQUEST" will
@@ -28,6 +37,7 @@ namespace VielTicketScrapper.Builders
         public ICalendarICSBuilder AddEvent(string title, DateTime eventStart, DateTime eventEnd)
         {
             AppendCurrentEvent();
+            EventsCount++;
 
             CalendarEventHolder = new()
             {
@@ -70,7 +80,7 @@ namespace VielTicketScrapper.Builders
         /// </summary>
         private void AppendCurrentEvent()
         {
-            if (CalendarEventHolder != null) { 
+            if (CalendarEventHolder != null) {
                 calendar.Events.Add(CalendarEventHolder);
                 CalendarEventHolder = null;
             }

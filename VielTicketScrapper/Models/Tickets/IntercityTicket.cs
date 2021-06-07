@@ -17,11 +17,11 @@ namespace VielTicketScrapper.Models.Tickets
 
         public override string GetEventDesc()
         {
-            return $"Nr biletu: {TicketNumber}\n" +
-                    TrainCarNumber != null ? $"Nr wagonu: {TrainCarNumber}\n" : "" +
-                    $"Miejsce: {Seat} \n" +
-                    $"Czas podróży: {TimeSpan.FromTicks(ArrivalDateTime.Ticks - DepartureDateTime.Ticks):hh\\:mm} \n" +
-                    $"Długość trasy: {TravelDistance} km\n";
+            return String.Concat($"Nr biletu: {TicketNumber}\n",
+                    TrainCarNumber != null ? $"Nr wagonu: {TrainCarNumber}\n" : "",
+                    $"Miejsce: {Seat} \n",
+                    $"Czas podróży: {TimeSpan.FromTicks(ArrivalDateTime.Ticks - DepartureDateTime.Ticks):hh\\:mm} \n",
+                    $"Długość trasy: {TravelDistance} km\n");
         }
 
         public override string GetEventTitle()

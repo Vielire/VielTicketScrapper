@@ -1,5 +1,4 @@
-﻿using iText.Layout.Element;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Invocation;
@@ -9,13 +8,10 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using VielTicketScrapper.Builders;
-using VielTicketScrapper.Builders.Ticket;
 using VielTicketScrapper.Helpers;
-using VielTicketScrapper.Models.Enums;
-using VielTicketScrapper.Models.Tickets;
 using VielTicketScrapper.Scrappers;
 
-namespace VielTicketScrapper
+namespace VielTicketScrapperConsole
 {
     public static class Program
     {
@@ -84,7 +80,7 @@ namespace VielTicketScrapper
 
             ICalendarICSBuilder iCSBuilder = CalendarICSBuilder.Create();
 
-            foreach(string filePath in allFiles)
+            foreach (string filePath in allFiles)
             {
                 Scrapper scrapper = new();
                 scrapper.ScrapPDF(filePath);
@@ -100,7 +96,7 @@ namespace VielTicketScrapper
 
                 File.Copy(filePath, Path.Combine(outputDirectory, Path.GetFileName(filePath)), true);
             }
-            
+
             File.WriteAllText(Path.Combine(outputDirectory, "IntercityTicketsEvents.ics"), iCSBuilder.ToString());
             coutSuccess($"All done! You should find .ics file in the [{outputDirectory}] directory which should be opened by now.");
 
