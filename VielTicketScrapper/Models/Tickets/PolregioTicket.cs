@@ -14,10 +14,10 @@ namespace VielTicketScrapper.Models.Tickets
 
         public override string GetEventDesc()
         {
-            return $"Nr biletu: {TicketNumber}\n" +
-                    $"Czas podróży: {TimeSpan.FromTicks(ArrivalDateTime.Ticks - DepartureDateTime.Ticks):hh\\:mm} \n" +
-                    $"Ważny w dniu: {ValidDateStart.ToLongDateString()} \n" +
-                    $"Ważny przez: {TimeSpan.FromHours(ValidDurationInHours):hh\\:mm} \n";
+            return String.Concat($"Nr biletu: {TicketNumber}\n",
+                    $"Czas podróży: {TimeSpan.FromTicks(ArrivalDateTime.Ticks - DepartureDateTime.Ticks):hh\\:mm} \n",
+                    $"Ważny w dniu: {ValidDateStart.ToLongDateString()} \n",
+                    $"Ważny przez: {TimeSpan.FromHours(ValidDurationInHours):hh\\:mm} \n");
         }
 
         public override string GetEventTitle()

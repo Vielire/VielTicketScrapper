@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "VielTicketScrapperConsole": {
+      "commandName": "Project",
+      "commandLineArgs": "convert \"C:\\Tickets\" --verbose"
+    }
+  }
+}
