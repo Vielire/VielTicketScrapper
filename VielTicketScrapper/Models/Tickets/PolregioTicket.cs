@@ -9,7 +9,7 @@ namespace VielTicketScrapper.Models.Tickets
     public class PolregioTicket : Ticket
     {
         public DateTime ValidDateStart { get; set; }
-        public int ValidDurationInHours { get; set; }
+        public double? ValidDurationInHours { get; set; }
         public string TrainNumber { get; set; }
 
         public override string GetEventDesc()
@@ -17,7 +17,7 @@ namespace VielTicketScrapper.Models.Tickets
             return String.Concat($"Nr biletu: {TicketNumber}\n",
                     $"Czas podróży: {TimeSpan.FromTicks(ArrivalDateTime.Ticks - DepartureDateTime.Ticks):hh\\:mm} \n",
                     $"Ważny w dniu: {ValidDateStart.ToLongDateString()} \n",
-                    $"Ważny przez: {TimeSpan.FromHours(ValidDurationInHours):hh\\:mm} \n");
+                    ValidDurationInHours!=null ? $"Ważny przez: {TimeSpan.FromHours((double)ValidDurationInHours):hh\\:mm} \n" : "");;
         }
 
         public override string GetEventTitle()

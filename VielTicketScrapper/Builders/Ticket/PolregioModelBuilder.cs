@@ -36,14 +36,22 @@ namespace VielTicketScrapper.Builders.Ticket
             tempLine = allLines.FirstOrDefault(l => l.Contains("Bilet ważny") && l.Contains("od"));
             Model.ValidDurationInHours = GetValidityDuration(tempLine);
 
+            tempLine = allLines.SkipWhile(x => !x.Contains("bezpośrednio przed podróżą")).Skip(1).FirstOrDefault();
+            Model.TicketNumber = tempLine;
+
             return Model;
         }
 
-        private int GetValidityDuration(string tempLine)
+        private double? GetValidityDuration(string tempLine)
         {
-            return String.IsNullOrEmpty(tempLine)
-                ? throw new NotSupportedException(NotSupportedExMessage)
-                : Convert.ToInt32(tempLine.Split(" ")[2].Trim());
+            try
+            {
+                return Convert.ToDouble(tempLine.Split(" ")[2].Trim());
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private string GetTravelerName(string tempLine)
