@@ -28,6 +28,7 @@ namespace VielTicketScrapperConsole
         static readonly Action<string> coutError = (message) => coutCustom(message, ConsoleColor.Red);
         static readonly Action<string> coutVerbose = (message) => coutCustom(message, ConsoleColor.DarkGray);
         static readonly Action<string> coutSuccess = (message) => coutCustom(message, ConsoleColor.DarkGreen);
+        static readonly Action<string> coutInformation = (message) => coutCustom(message, ConsoleColor.DarkCyan);
 
         public static async Task<int> Main(string[] args)
         {
@@ -79,6 +80,12 @@ namespace VielTicketScrapperConsole
             }
 
             ICalendarICSBuilder iCSBuilder = CalendarICSBuilder.Create();
+
+            if(allFiles.Count == 0)
+            {
+                coutInformation("No PDF file found.");
+                Environment.Exit(2); // ERROR_FILE_NOT_FOUND
+            }
 
             foreach (string filePath in allFiles)
             {
