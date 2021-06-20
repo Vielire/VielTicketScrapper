@@ -18,13 +18,21 @@ namespace VielTicketScrapper.Helpers
             }
             else if (IsItPolregio(scrapper.allLines))
             {
-                //throw new NotSupportedException($"Polregio files are not supported yet.");
                 return new PolregioModelBuilder(scrapper.allLines);
+            }
+            else if (IsItKolejeSlaskie(scrapper.allLines))
+            {
+                return new KolejeSlaskieModelBuilder(scrapper.allLines);
             }
             else
             {
                 throw new NotSupportedException($"Provided file [{scrapper.filePath}] is not supported");
             }
+        }
+
+        private static bool IsItKolejeSlaskie(IEnumerable<string> lines)
+        {
+            return lines.Any(l => l.ToLower().Contains("koleje śląskie"));
         }
 
         private static bool IsItIntercity(IEnumerable<string> lines)

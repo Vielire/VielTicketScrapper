@@ -89,19 +89,35 @@ namespace VielTicketScrapperConsole
 
             foreach (string filePath in allFiles)
             {
-                Scrapper scrapper = new();
-                scrapper.ScrapPDF(filePath);
+                try
+                {
+                    Scrapper scrapper = new();
+                    scrapper.ScrapPDF(filePath);
 
-                var ticketBuilder = TicketIdentifier.InstantiateTicketBuilder(scrapper);
-                var ticket = ticketBuilder.Build();
+                    var ticketBuilder = TicketIdentifier.InstantiateTicketBuilder(scrapper);
+                    var ticket = ticketBuilder.Build();
 
-                iCSBuilder.AddEvent(ticket.GetEventTitle(), ticket.DepartureDateTime, ticket.ArrivalDateTime)
-                            .AddEventDescription(ticket.GetEventDesc())
-                            .AddEventAlarm(15, ticket.GetAlarmMessage())
-                            .AddEventAlarm(2 * 60, ticket.GetAlarmMessage())
-                            .AddEventAlarm(24 * 60, ticket.GetAlarmMessage());
+                    iCSBuilder.AddEvent(ticket.GetEventTitle(), ticket.DepartureDateTime, ticket.ArrivalDateTime)
+                                .AddEventDescription(ticket.GetEventDesc())
+                                .AddEventAlarm(15, ticket.GetAlarmMessage())
+                                .AddEventAlarm(2 * 60, ticket.GetAlarmMessage())
+                                .AddEventAlarm(24 * 60, ticket.GetAlarmMessage());
 
-                File.Copy(filePath, Path.Combine(outputDirectory, Path.GetFileName(filePath)), true);
+                    File.Copy(filePath, Path.Combine(outputDirectory, Path.GetFileName(filePath)), true);
+                }
+                catch(NotSupportedException)
+                {
+                    coutError(String.Format("[{0}] is not supported file and will be moved to \"NotSupportedFiles\"",
+                        Path.GetFileName(filePath)));
+                    
+                    string notSupportedFilesFolderPath = Path.Combine(Directory.GetParent(outputDirectory).Parent.FullName, "NotSupportedFiles");
+                    if (!Directory.Exists(notSupportedFilesFolderPath))
+                    {
+                        Directory.CreateDirectory(notSupportedFilesFolderPath);
+                    }
+                    File.Move(filePath, Path.Combine(notSupportedFilesFolderPath, Path.GetFileName(filePath)), true);
+                }
+                
             }
 
             File.WriteAllText(Path.Combine(outputDirectory, "IntercityTicketsEvents.ics"), iCSBuilder.ToString());
