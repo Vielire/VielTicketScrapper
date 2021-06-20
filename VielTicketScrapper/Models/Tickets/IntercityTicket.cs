@@ -9,7 +9,6 @@ namespace VielTicketScrapper.Models.Tickets
     public class IntercityTicket : Ticket
     {
         public string TrainType { get; set; }
-        public int TrainNumber { get; set; }
         public int? TrainCarNumber { get; set; }
         public int TravelDistance { get; set; }
         public string Seat { get; set; }
