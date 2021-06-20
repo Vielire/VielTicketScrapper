@@ -31,11 +31,19 @@ namespace VielTicketScrapper.Builders.Ticket
             tempLine2 = allLines.FirstOrDefault(x => x.Contains("Wyjazd dn.:"));
             Model.DepartureDateTime = GetDepartureDate(tempLine2, tempLine);
             Model.ArrivalDateTime = GetArrivalDate(Model.DepartureDateTime, Model.ValidDurationInHours);
+            Model.ValidDateStart = Model.DepartureDateTime;
 
-            tempLine = allLines.FirstOrDefault(x => x.Contains("Przejazd TAM"));
-            Model.TravelerName = GetTravelerName(tempLine);
+            Model.TravelerName = GetTravelerName(allLines.FirstOrDefault(x => x.Contains("Przejazd TAM")));
+            Model.TicketNumber = GetTicketNumber(allLines.FirstOrDefault(x => x.Contains("PTU") && x.Contains("w tym")));
 
             return Model;
+        }
+
+        private string GetTicketNumber(string tempLine)
+        {
+            if (String.IsNullOrEmpty(tempLine)) return null;
+
+            return String.Join(' ', tempLine.Split(" ")[^2..]);
         }
 
         private string GetTravelerName(string tempLine)

@@ -132,13 +132,13 @@ namespace VielTicketScrapper.Builders.Ticket
 
             return line[(timeMatch.Index + 6)..].Split(" ").First();
         }
-        protected int GetTrainNumber(string line)
+        protected string GetTrainNumber(string line)
         {
             Match timeMatch = Regex.Match(line, TimeRegexPattern);
             if (!timeMatch.Success)
                 throw new NotSupportedException(NotSupportedExMessage);
 
-            return Convert.ToInt32(line[(timeMatch.Index + 6)..].Split(" ")[1]);
+            return line[(timeMatch.Index + 6)..].Split(" ")[1];
         }
         protected int GetTravelDistance(string line)
         {

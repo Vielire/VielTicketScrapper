@@ -13,7 +13,6 @@ namespace VielTicketScrapper.Models.Tickets
         public override string GetEventDesc()
         {
             return String.Concat($"Nr biletu: {TicketNumber}\n",
-                    $"Czas podróży: {TimeSpan.FromTicks(ArrivalDateTime.Ticks - DepartureDateTime.Ticks):hh\\:mm} \n",
                     $"Ważny w dniu: {ValidDateStart.ToLongDateString()} \n",
                     ValidDurationInHours != null ? $"Ważny przez: {TimeSpan.FromHours((double)ValidDurationInHours):hh\\:mm} \n" : ""); ;
         }
