@@ -40,11 +40,23 @@ else
     <button @onclick="ProcessFiles">Upload files</button>
 }
 
+@icsPlainText
+
+@if (exceptionMessages.Any()) {
+    foreach(var msg in exceptionMessages)
+    {
+        <p style="font-weight: bold; color: darkred;">@msg</p>
+    }
+}
+
 @code {
     private List<IBrowserFile> loadedFiles = new();
     private long maxFileSize = 1024 * 1024 * 5;
     private int maxAllowedFiles = 10;
     private bool isLoading;
+
+    private List<string> exceptionMessages = new();
+    private string icsPlainText;
 
     private void LoadFiles(InputFileChangeEventArgs e)
     {
@@ -67,25 +79,35 @@ else
         isLoading = false;
     }
 
-    private void ProcessFiles()
+    private async Task ProcessFiles()
     {
+        exceptionMessages.Clear();
         ICalendarICSBuilder iCSBuilder = CalendarICSBuilder.Create();
 
         foreach (var file in loadedFiles) {
-            Scrapper scrapper = new();
-            scrapper.ScrapPDF(file);
+            try
+            {
+                Scrapper scrapper = new();
+                System.IO.MemoryStream ms = new();
+                await file.OpenReadStream().CopyToAsync(ms);
+                ms.Position = 0;
+                scrapper.Scrap(ms);
 
-            var ticketBuilder = TicketIdentifier.InstantiateTicketBuilder(scrapper);
-            var ticket = ticketBuilder.Build();
+                var ticketBuilder = TicketIdentifier.InstantiateTicketBuilder(scrapper);
+                var ticket = ticketBuilder.Build();
 
-            iCSBuilder.AddEvent(ticket.GetEventTitle(), ticket.DepartureDateTime, ticket.ArrivalDateTime)
-                        .AddEventDescription(ticket.GetEventDesc())
-                        .AddEventAlarm(15, ticket.GetAlarmMessage())
-                        .AddEventAlarm(2 * 60, ticket.GetAlarmMessage())
-                        .AddEventAlarm(24 * 60, ticket.GetAlarmMessage());
-
+                iCSBuilder.AddEvent(ticket.GetEventTitle(), ticket.DepartureDateTime, ticket.ArrivalDateTime)
+                            .AddEventDescription(ticket.GetEventDesc())
+                            .AddEventAlarm(15, ticket.GetAlarmMessage())
+                            .AddEventAlarm(2 * 60, ticket.GetAlarmMessage())
+                            .AddEventAlarm(24 * 60, ticket.GetAlarmMessage());
+            }
+            catch(Exception e)
+            {
+                exceptionMessages.Add(e.Message);
+            }
         }
 
-        iCSBuilder.ToString();
+        icsPlainText = iCSBuilder.ToString();
     }
 }

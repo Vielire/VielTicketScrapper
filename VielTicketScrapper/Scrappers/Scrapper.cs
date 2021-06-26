@@ -13,29 +13,51 @@ namespace VielTicketScrapper.Scrappers
     {
         public IEnumerable<string> allLines;
         public string filePath;
-        public void ScrapPDF(string filePath)
+
+        public void Scrap(string filePath)
         {
             this.filePath = filePath;
             if (Path.GetExtension(this.filePath).ToLower() != ".pdf")
                 throw new NotSupportedException("File type not supported.");
 
-            StringBuilder sb = new();
-            var pdfDocument = new PdfDocument(new PdfReader(this.filePath));
-            var strategy = new LocationTextExtractionStrategy();
+            PdfDocument pdfDocument = new(new PdfReader(this.filePath));
 
-            for (int i = 1; i <= pdfDocument.GetNumberOfPages(); ++i)
+            string plainText = ReadPlainText(pdfDocument);
+            if (plainText.Length > 0)
             {
-                var page = pdfDocument.GetPage(i);
-                string text = PdfTextExtractor.GetTextFromPage(page, strategy);
-                sb.Append(text);
-            }
-
-            if (sb.Length > 0)
-            {
-                allLines = sb.ToString().Split("\n");
+                allLines = plainText.Split("\n");
             }
 
             pdfDocument.Close();
         }
+
+        public void Scrap(Stream stream)
+        {
+            PdfDocument pdfDocument = new(new PdfReader(stream));
+
+            string plainText = ReadPlainText(pdfDocument);
+            if (plainText.Length > 0)
+            {
+                allLines = plainText.Split("\n");
+            }
+
+            pdfDocument.Close();
+        }
+
+        #region private methods
+        private string ReadPlainText(PdfDocument doc)
+        {
+            StringBuilder sb = new();
+
+            for (int i = 1; i <= doc.GetNumberOfPages(); ++i)
+            {
+                var page = doc.GetPage(i);
+                string text = PdfTextExtractor.GetTextFromPage(page, new LocationTextExtractionStrategy());
+                sb.Append(text);
+            }
+
+            return sb.ToString();
+        }
+        #endregion
     }
 }
