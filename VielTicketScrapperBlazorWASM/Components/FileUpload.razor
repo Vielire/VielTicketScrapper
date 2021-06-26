@@ -1,0 +1,91 @@
+﻿@page "/file-upload"
+@using Microsoft.Extensions.Logging
+@using VielTicketScrapper.Builders;
+@using VielTicketScrapper.Helpers;
+@using VielTicketScrapper.Scrappers;
+@inject ILogger<FileUpload> Logger
+
+<h3>Upload Files</h3>
+
+<p>
+    <label>
+        Upload up to @maxAllowedFiles of up to @maxFileSize megabytes:
+        <InputFile OnChange="@LoadFiles" multiple />
+    </label>
+</p>
+
+@if (isLoading)
+{
+    <p>Uploading...</p>
+}
+else
+{
+    <ul>
+        @foreach (var file in loadedFiles)
+        {
+            <li>
+                <ul>
+                    <li>Name: @file.Name</li>
+                    <li>Last modified: @file.LastModified.ToString()</li>
+                    <li>Size (bytes): @file.Size</li>
+                    <li>Content type: @file.ContentType</li>
+                </ul>
+            </li>
+        }
+    </ul>
+}
+
+@if (loadedFiles.Any())
+{
+    <button @onclick="ProcessFiles">Upload files</button>
+}
+
+@code {
+    private List<IBrowserFile> loadedFiles = new();
+    private long maxFileSize = 1024 * 1024 * 5;
+    private int maxAllowedFiles = 10;
+    private bool isLoading;
+
+    private void LoadFiles(InputFileChangeEventArgs e)
+    {
+        isLoading = true;
+        loadedFiles.Clear();
+
+        foreach (var file in e.GetMultipleFiles(maxAllowedFiles))
+        {
+            try
+            {
+                loadedFiles.Add(file);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("File: {Filename} Error: {Error}",
+                    file.Name, ex.Message);
+            }
+        }
+
+        isLoading = false;
+    }
+
+    private void ProcessFiles()
+    {
+        ICalendarICSBuilder iCSBuilder = CalendarICSBuilder.Create();
+
+        foreach (var file in loadedFiles) {
+            Scrapper scrapper = new();
+            scrapper.ScrapPDF(file);
+
+            var ticketBuilder = TicketIdentifier.InstantiateTicketBuilder(scrapper);
+            var ticket = ticketBuilder.Build();
+
+            iCSBuilder.AddEvent(ticket.GetEventTitle(), ticket.DepartureDateTime, ticket.ArrivalDateTime)
+                        .AddEventDescription(ticket.GetEventDesc())
+                        .AddEventAlarm(15, ticket.GetAlarmMessage())
+                        .AddEventAlarm(2 * 60, ticket.GetAlarmMessage())
+                        .AddEventAlarm(24 * 60, ticket.GetAlarmMessage());
+
+        }
+
+        iCSBuilder.ToString();
+    }
+}
