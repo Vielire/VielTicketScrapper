@@ -11,7 +11,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VielTicketScrapperConsole",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VielTicketScrapperService", "VielTicketScrapperService\VielTicketScrapperService.csproj", "{1FAD70E2-5AA5-4D21-AF9A-7EC3BDC44E55}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VielTicketScrapperBlazorPWA", "VielTicketScrapperBlazorPWA\VielTicketScrapperBlazorPWA.csproj", "{32489DF3-15B8-4655-A976-01F339548B46}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VielTicketScrapperBlazorPWA", "VielTicketScrapperBlazorPWA\VielTicketScrapperBlazorPWA.csproj", "{32489DF3-15B8-4655-A976-01F339548B46}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
