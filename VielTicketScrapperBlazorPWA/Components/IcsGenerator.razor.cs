@@ -24,6 +24,8 @@ namespace VielTicketScrapperBlazorPWA.Components
         private int maxAllowedFiles = 10;
         private bool isLoading;
 
+        private string _dragEnterStyle;
+
         private List<string> exceptionMessages = new();
 
         private void LoadFiles(InputFileChangeEventArgs e)

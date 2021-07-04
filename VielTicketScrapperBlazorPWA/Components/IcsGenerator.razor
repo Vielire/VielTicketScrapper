@@ -1,40 +1,76 @@
-﻿<h3>Generate ICS File</h3>
+﻿@inject ISnackbar Snackbar
 
-<p>
-    <label>
-        Upload up to @maxAllowedFiles of up to @maxFileSize megabytes:
-        <InputFile OnChange="@LoadFiles" multiple />
-    </label>
-</p>
+<style>
+    .drag-drop-zone {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all .4s;
+        min-height: 400px;
+        position: relative;
+    }
 
-@if (isLoading)
-{
-    <p>Uploading...</p>
-}
-else
-{
-    <ul>
-        @foreach (var file in loadedFiles)
-        {
-            <li>
-                <ul>
-                    <li>Name: @file.Name</li>
-                    <li>Size (bytes): @file.Size</li>
-                </ul>
-            </li>
-        }
-    </ul>
-}
+    .drag-drop-input {
+        position: absolute;
+        width: 100%;
+        height: 90%;
+        opacity: 0;
+        cursor: pointer;
+        z-index: 2;
+    }
 
-@if (loadedFiles.Any())
-{
-    <MudButton Variant="Variant.Filled"
-               Color="Color.Dark"
-               Size="Size.Small"
-               @onclick="ProcessFiles">
-        Generate ICS file
-    </MudButton>
-}
+    .drag-enter {
+        box-shadow: var(--mud-elevation-10);
+    }
+
+    .list {
+        padding: 2em;
+        min-width: 100%;
+    }
+</style>
+
+<MudPaper @ondragenter="@(()=>_dragEnterStyle="drag-enter")"
+          @ondragleave="@(()=>_dragEnterStyle=null)"
+          @ondragend="@(()=>_dragEnterStyle=null)"
+          Class=@("drag-drop-zone "+ _dragEnterStyle)>
+
+    <InputFile OnChange="LoadFiles" multiple class="drag-drop-input" />
+
+    @if (loadedFiles.Count() == 0)
+    {
+        <MudText Typo="Typo.h3">Drag and drop files here or click</MudText>
+    }
+    else
+    {
+        <MudList Style="padding:2em;width:100%;" Dense="true">
+            @foreach (var file in loadedFiles)
+            {
+                <MudListItem @key="@file">
+                    <MudChip Color="Color.Dark"
+                             Style="width:60px; overflow:hidden;"
+                             Text="@(file.Name.Split(".").Last())" />
+                    @file.Name
+                </MudListItem>}
+        </MudList>
+    }
+</MudPaper>
+
+<MudGrid Class="mt-6" Justify="Justify.Center" Spacing="2">
+    <MudItem>
+        <MudButton Variant="Variant.Filled"
+                    Disabled="@(!loadedFiles.Any())"
+                    Color="Color.Dark"
+                    Size="Size.Small"
+                    @onclick="ProcessFiles">Generate ICS file</MudButton>
+    </MudItem>
+    <MudItem>
+        <MudButton OnClick="@loadedFiles.Clear"
+                    Disabled="@(!loadedFiles.Any())"
+                    Color="Color.Error"
+                    Size="Size.Small"
+                    Variant="Variant.Filled">Clear</MudButton>
+    </MudItem>
+</MudGrid>
 
 @if (exceptionMessages.Any())
 {
