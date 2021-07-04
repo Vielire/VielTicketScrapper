@@ -5,84 +5,64 @@ using Ical.Net.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using VielTicketScrapper.Models.Calendar;
 
 namespace VielTicketScrapper.Builders
 {
-    public class CalendarICSBuilder : ICalendarICSBuilder
+    public class CalendarICSBuilder
     {
-        private Calendar calendar;
-        private CalendarEvent CalendarEventHolder;
-
-        private int _eventsCount;
+        private readonly Calendar _calendar;
 
         public int EventsCount
         {
-            get { return _eventsCount; }
-            set { _eventsCount = value; }
+            get { return _calendar.Events.Count; }
         }
 
-
-        private CalendarICSBuilder()
+        public CalendarICSBuilder()
         {
             // Outlook needs property Method = CalendarMethods.Publish cause "REQUEST" will
             // update an existing event with the same UID (Unique ID) and a newer timestamp.
-            calendar = new() { Method = CalendarMethods.Publish };
+            _calendar = new() { Method = CalendarMethods.Publish };
         }
 
-        public static ICalendarICSBuilder Create()
+        public CalendarICSBuilder AddEvent(TripEvent tripEvent)
         {
-            return new CalendarICSBuilder();
-        }
-
-        public ICalendarICSBuilder AddEvent(string title, DateTime eventStart, DateTime eventEnd)
-        {
-            AppendCurrentEvent();
-            EventsCount++;
-
-            CalendarEventHolder = new()
+            CalendarEvent calendarEvent = new()
             {
                 Class = "Publish",
                 Name = "VEVENT",
                 Uid = Guid.NewGuid().ToString(),
-                Summary = title,
-                Start = new CalDateTime(eventStart),
-                End = new CalDateTime(eventEnd),
+                Summary = tripEvent.Title,
+                Start = new CalDateTime(tripEvent.StartDateTime),
+                End = new CalDateTime(tripEvent.EndDateTime),
+                Description = tripEvent.Description
             };
-            return this;
-        }
 
-        public ICalendarICSBuilder AddEventDescription(string description)
-        {
-            CalendarEventHolder.Description = description;
-            return this;
-        }
-
-        public ICalendarICSBuilder AddEventAlarm(int minutesBeforeEvent, string withMessage)
-        {
-            CalendarEventHolder.Alarms.Add(new()
+            foreach(var alarm in tripEvent.Alarms)
             {
-                Action = AlarmAction.Display,
-                Trigger = new Trigger(TimeSpan.FromTicks(CalendarEventHolder.Start.AddMinutes(-minutesBeforeEvent).Ticks)),
-                Summary = withMessage
-            });
+                calendarEvent.Alarms.Add(new() {
+                    Action = AlarmAction.Display,
+                    Trigger = new Trigger(TimeSpan.FromTicks(calendarEvent.Start.AddMinutes(-alarm.MinutesBeforeEvent).Ticks)),
+                    Summary = alarm.Message
+                });
+            }
+
+            _calendar.Events.Add(calendarEvent);
+
             return this;
         }
 
         public override string ToString()
         {
-            AppendCurrentEvent();
-
-            return new CalendarSerializer(new SerializationContext()).SerializeToString(calendar);
-        }
-
-        /// <summary>
-        /// Appends current Event to the calendar object and sets CalendarEventHolder to null
-        /// </summary>
-        private void AppendCurrentEvent()
-        {
-            if (CalendarEventHolder != null) {
-                calendar.Events.Add(CalendarEventHolder);
-                CalendarEventHolder = null;
+            if(_calendar.Events.Count > 0)
+            {
+                return new CalendarSerializer(new SerializationContext()).SerializeToString(_calendar);
+            }
+            else
+            {
+                throw new InvalidOperationException("Sequence of Trip Events contains no elements");
             }
         }
     }

@@ -52,7 +52,7 @@ namespace VielTicketScrapperBlazorPWA.Components
         private async Task ProcessFiles()
         {
             exceptionMessages.Clear();
-            NewCalendarICSBuilder iCSBuilder = new();
+            CalendarICSBuilder iCSBuilder = new();
 
             foreach (var file in loadedFiles)
             {
