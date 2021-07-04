@@ -7,9 +7,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VielTicketScrapper", "VielT
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VielTicketScrapper.UnitTests", "VielTicketScrapper.UnitTests\VielTicketScrapper.UnitTests.csproj", "{62837185-AC7E-4720-88FE-C6E83DAF1B91}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VielTicketScrapperConsole", "VielTicketScrapperConsole\VielTicketScrapperConsole.csproj", "{B93063B9-ED05-4E24-A67B-74FE61FC43C9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VielTicketScrapperConsole", "VielTicketScrapperConsole\VielTicketScrapperConsole.csproj", "{B93063B9-ED05-4E24-A67B-74FE61FC43C9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VielTicketScrapperService", "VielTicketScrapperService\VielTicketScrapperService.csproj", "{1FAD70E2-5AA5-4D21-AF9A-7EC3BDC44E55}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VielTicketScrapperService", "VielTicketScrapperService\VielTicketScrapperService.csproj", "{1FAD70E2-5AA5-4D21-AF9A-7EC3BDC44E55}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VielTicketScrapperBlazorPWA", "VielTicketScrapperBlazorPWA\VielTicketScrapperBlazorPWA.csproj", "{32489DF3-15B8-4655-A976-01F339548B46}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{1FAD70E2-5AA5-4D21-AF9A-7EC3BDC44E55}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1FAD70E2-5AA5-4D21-AF9A-7EC3BDC44E55}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1FAD70E2-5AA5-4D21-AF9A-7EC3BDC44E55}.Release|Any CPU.Build.0 = Release|Any CPU
+		{32489DF3-15B8-4655-A976-01F339548B46}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{32489DF3-15B8-4655-A976-01F339548B46}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{32489DF3-15B8-4655-A976-01F339548B46}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{32489DF3-15B8-4655-A976-01F339548B46}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

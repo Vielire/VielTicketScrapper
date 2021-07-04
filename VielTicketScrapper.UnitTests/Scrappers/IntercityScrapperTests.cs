@@ -17,9 +17,9 @@ namespace VielTicketScrapper.UnitTests.Scrappers
         {
             Scrapper scrapper = new();
 
-            Assert.ThrowsException<NotSupportedException>(() => {
-                scrapper.ScrapPDF(filePath);
-            });
+            Assert.ThrowsException<NotSupportedException>((Action)(() => {
+                scrapper.Scrap((string)filePath);
+            }));
         }
 
         [DataTestMethod]
@@ -28,7 +28,7 @@ namespace VielTicketScrapper.UnitTests.Scrappers
         {
             Scrapper scrapper = new();
 
-            scrapper.ScrapPDF(filePath);
+            scrapper.Scrap(filePath);
             
             Assert.IsTrue(scrapper.allLines.Any());
         }

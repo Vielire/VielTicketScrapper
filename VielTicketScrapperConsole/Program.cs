@@ -92,7 +92,7 @@ namespace VielTicketScrapperConsole
                 try
                 {
                     Scrapper scrapper = new();
-                    scrapper.ScrapPDF(filePath);
+                    scrapper.Scrap(filePath);
 
                     var ticketBuilder = TicketIdentifier.InstantiateTicketBuilder(scrapper);
                     var ticket = ticketBuilder.Build();
