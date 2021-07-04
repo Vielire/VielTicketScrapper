@@ -28,54 +28,57 @@
         min-width: 100%;
     }
 </style>
+<MudGrid Justify="Justify.Center">
+    <MudItem xs="12" md="8">
+        <MudPaper @ondragenter="@(()=>_dragEnterStyle="drag-enter")"
+                  @ondragleave="@(()=>_dragEnterStyle=null)"
+                  @ondragend="@(()=>_dragEnterStyle=null)"
+                  Class=@("drag-drop-zone "+ _dragEnterStyle)>
 
-<MudPaper @ondragenter="@(()=>_dragEnterStyle="drag-enter")"
-          @ondragleave="@(()=>_dragEnterStyle=null)"
-          @ondragend="@(()=>_dragEnterStyle=null)"
-          Class=@("drag-drop-zone "+ _dragEnterStyle)>
+            <InputFile OnChange="LoadFiles" multiple class="drag-drop-input" />
 
-    <InputFile OnChange="LoadFiles" multiple class="drag-drop-input" />
-
-    @if (loadedFiles.Count() == 0)
-    {
-        <MudText Typo="Typo.h3">Drag and drop files here or click</MudText>
-    }
-    else
-    {
-        <MudList Style="padding:2em;width:100%;" Dense="true">
-            @foreach (var file in loadedFiles)
+            @if (loadedFiles.Count() == 0)
             {
-                <MudListItem @key="@file">
-                    <MudChip Color="Color.Dark"
-                             Style="width:60px; overflow:hidden;"
-                             Text="@(file.Name.Split(".").Last())" />
-                    @file.Name
-                </MudListItem>}
-        </MudList>
-    }
-</MudPaper>
+                <MudText Typo="Typo.h3">Drag and drop files here or click</MudText>
+            }
+            else
+            {
+                <MudList Style="padding:2em;width:100%;" Dense="true">
+                    @foreach (var file in loadedFiles)
+                    {
+                        <MudListItem @key="@file">
+                            <MudChip Color="Color.Dark"
+                                     Style="width:60px; overflow:hidden;"
+                                     Text="@(file.Name.Split(".").Last())" />
+                            @file.Name
+                        </MudListItem>}
+                </MudList>
+            }
+        </MudPaper>
 
-<MudGrid Class="mt-6" Justify="Justify.Center" Spacing="2">
-    <MudItem>
-        <MudButton Variant="Variant.Filled"
-                    Disabled="@(!loadedFiles.Any())"
-                    Color="Color.Dark"
-                    Size="Size.Small"
-                    @onclick="ProcessFiles">Generate ICS file</MudButton>
-    </MudItem>
-    <MudItem>
-        <MudButton OnClick="@loadedFiles.Clear"
-                    Disabled="@(!loadedFiles.Any())"
-                    Color="Color.Error"
-                    Size="Size.Small"
-                    Variant="Variant.Filled">Clear</MudButton>
+        <MudGrid Class="mt-6" Justify="Justify.Center" Spacing="2">
+            <MudItem>
+                <MudButton Variant="Variant.Filled"
+                           Disabled="@(!loadedFiles.Any())"
+                           Color="Color.Dark"
+                           Size="Size.Small"
+                           @onclick="ProcessFiles">Generate ICS file</MudButton>
+            </MudItem>
+            <MudItem>
+                <MudButton OnClick="@loadedFiles.Clear"
+                           Disabled="@(!loadedFiles.Any())"
+                           Color="Color.Error"
+                           Size="Size.Small"
+                           Variant="Variant.Filled">Clear</MudButton>
+            </MudItem>
+        </MudGrid>
+
+        @if (exceptionMessages.Any())
+        {
+            foreach (var msg in exceptionMessages)
+            {
+                <p style="font-weight: bold; color: darkred;">@msg</p>
+            }
+        }
     </MudItem>
 </MudGrid>
-
-@if (exceptionMessages.Any())
-{
-    foreach (var msg in exceptionMessages)
-    {
-        <p style="font-weight: bold; color: darkred;">@msg</p>
-    }
-}
