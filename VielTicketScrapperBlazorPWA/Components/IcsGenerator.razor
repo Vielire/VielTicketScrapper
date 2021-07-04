@@ -28,7 +28,12 @@ else
 
 @if (loadedFiles.Any())
 {
-    <button @onclick="ProcessFiles">Generate ICS file</button>
+    <MudButton Variant="Variant.Filled"
+               Color="Color.Dark"
+               Size="Size.Small"
+               @onclick="ProcessFiles">
+        Generate ICS file
+    </MudButton>
 }
 
 @if (exceptionMessages.Any())

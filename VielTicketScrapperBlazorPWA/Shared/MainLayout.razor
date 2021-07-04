@@ -1,17 +1,17 @@
 ﻿@inherits LayoutComponentBase
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+<MudThemeProvider/>
+<MudDialogProvider/>
+<MudSnackbarProvider/>
 
-    <div class="main">
-        <div class="top-row px-4">
-            <a href="http://blazor.net" target="_blank" class="ml-md-auto">About</a>
+<MudLayout>
+    <MudAppBar Color="Color.Dark" Style="color: white;">
+        Ticket Scrapper
+    </MudAppBar>
+    <MudMainContent>
+        <div class="pa-4 mx-auto">
+            @*@Body*@
+            <VielTicketScrapperBlazorPWA.Components.IcsGenerator />
         </div>
-
-        <div class="content px-4">
-            @Body
-        </div>
-    </div>
-</div>
+    </MudMainContent>
+</MudLayout>

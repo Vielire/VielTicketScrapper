@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using VielTicketScrapper.Builders;
 using VielTicketScrapper.Helpers;
+using VielTicketScrapper.Models.Calendar;
 using VielTicketScrapper.Scrappers;
 
 namespace VielTicketScrapperBlazorPWA.Components
@@ -49,7 +50,7 @@ namespace VielTicketScrapperBlazorPWA.Components
         private async Task ProcessFiles()
         {
             exceptionMessages.Clear();
-            ICalendarICSBuilder iCSBuilder = CalendarICSBuilder.Create();
+            NewCalendarICSBuilder iCSBuilder = new();
 
             foreach (var file in loadedFiles)
             {
@@ -64,11 +65,21 @@ namespace VielTicketScrapperBlazorPWA.Components
                     var ticketBuilder = TicketIdentifier.InstantiateTicketBuilder(scrapper);
                     var ticket = ticketBuilder.Build();
 
-                    iCSBuilder.AddEvent(ticket.GetEventTitle(), ticket.DepartureDateTime, ticket.ArrivalDateTime)
-                                .AddEventDescription(ticket.GetEventDesc())
-                                .AddEventAlarm(15, ticket.GetAlarmMessage())
-                                .AddEventAlarm(2 * 60, ticket.GetAlarmMessage())
-                                .AddEventAlarm(24 * 60, ticket.GetAlarmMessage());
+                    var tripEvent = new TripEvent()
+                    {
+                        Title = ticket.GetEventTitle(),
+                        Description = ticket.GetEventDesc(),
+                        StartDateTime = ticket.DepartureDateTime,
+                        EndDateTime = ticket.ArrivalDateTime,
+                        Alarms = new()
+                        {
+                            new TripEvent.EventAlarm(15, ticket.GetAlarmMessage()),
+                            new TripEvent.EventAlarm(2 * 60, ticket.GetAlarmMessage()),
+                            new TripEvent.EventAlarm(24 * 60, ticket.GetAlarmMessage())
+                        }
+                    };
+
+                    iCSBuilder.AddEvent(tripEvent);
                 }
                 catch (Exception e)
                 {
